@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Hugo 0.87.0" />
+  
+<script>
+  MathJax = {
+    tex: {
+      inlineMath: [["$", "$"]],
+    },
+    displayMath: [
+      ["$$", "$$"],
+      ["\[\[", "\]\]"],
+    ],
+    svg: {
+      fontCache: "global",
+    },
+  };
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+
+
+  <title> PID优化器 |  Hugo</title>
+  <meta name="description" content="A simple and concise hugo theme.">
+  <link rel="stylesheet" href="http://108.160.143.157css/simpleness.css">
+  <link rel="canonical" href="http://108.160.143.157/posts/pid%E4%BC%98%E5%8C%96%E5%99%A8/">
+  <link rel="alternate" type="application/rss+xml" href="" title="Hugo">
+  
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+</head>
+
+
+<body>
+  <header class="menus">
+  
+
+  <nav >
+    
+    <a href="/"> Home</a>
+    
+    <a href="/about/"> About</a>
+    
+  </nav>
+
+  <nav class="fontawesome">
+    
+    <a href="https://github.com/RainerChiang" target="_blank">
+        <i title="GitHub" class="fab fa-github"></i>
+    </a>
+    
+    
+    <a href="http://108.160.143.157/index.xml" target="_blank">
+        <i title="RSS" class="fas fa-rss"></i>
+    </a>
+    
+  </nav>
+  
+  
+  <div class="hidden description">A simple and concise hugo theme.</div>
+  
+</header>
+
+<article class="article">
+  <header>
+    <h1 style="text-align: center;" >PID优化器</h1>
+
+    <div class="post-meta">
+    
+      <time datetime="2021-07-31T11:09:38&#43;08:00">July 31, 2021</time> &nbsp; 
+    
+
+     &nbsp;
+
+    
+    
+    
+
+    
+      <i class="far fa-clock"></i>
+      
+      
+      
+
+      
+        4 min
+      
+      48 s
+      &nbsp;
+    
+
+    
+    </div>
+  </header>
+
+   
+
+  <div class="text">
+    <p>
+上个星期在回顾优化器的时候注意到动量法和物联网控制中的一个控制算法PID很像，并且很多优化器可以看作是PID的一种特殊形式。突发奇想能不能把这个算法用在优化器中。之前大概是我大三的时候在实验课上用matlab做过PID的实验，但是具体怎么实现早就忘了，于是乎在一番google下做了一个PID控制的DEMO。代码如下:</p>
+<div class="src src-python">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e"># coding: utf-8</span>
+<span style="color:#f92672">from</span> collections <span style="color:#f92672">import</span> deque
+<span style="color:#f92672">import</span> random
+
+
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">PID</span>(object):
+    <span style="color:#66d9ef">def</span> __init__(self, sp):
+        super(PID)<span style="color:#f92672">.</span>__init__()
+        self<span style="color:#f92672">.</span>erros <span style="color:#f92672">=</span> deque(maxlen<span style="color:#f92672">=</span><span style="color:#ae81ff">5</span>)
+        self<span style="color:#f92672">.</span>erros<span style="color:#f92672">.</span>extend([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>])
+        self<span style="color:#f92672">.</span>sp <span style="color:#f92672">=</span> sp
+        self<span style="color:#f92672">.</span>pv <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>
+
+    <span style="color:#a6e22e">@property</span>
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">measure</span>(self):
+        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>pv
+
+    <span style="color:#a6e22e">@measure</span><span style="color:#f92672">.</span>setter
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">controll</span>(self,v):
+        self<span style="color:#f92672">.</span>pv<span style="color:#f92672">=</span>v
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">oscillation</span>(self):
+        self<span style="color:#f92672">.</span>pv<span style="color:#f92672">+=</span>random<span style="color:#f92672">.</span>normalvariate(<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>)
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">compute</span>(self, Kp, Ki, Kd, ts):
+        erro <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>sp<span style="color:#f92672">-</span>self<span style="color:#f92672">.</span>pv
+        self<span style="color:#f92672">.</span>erros<span style="color:#f92672">.</span>append(erro)
+        pterm <span style="color:#f92672">=</span> Kp<span style="color:#f92672">*</span>erro
+        iterm <span style="color:#f92672">=</span> Ki<span style="color:#f92672">*</span>sum(self<span style="color:#f92672">.</span>erros)<span style="color:#f92672">/</span>len(self<span style="color:#f92672">.</span>erros)
+        dterm <span style="color:#f92672">=</span> Kd<span style="color:#f92672">*</span>(self<span style="color:#f92672">.</span>erros[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>]<span style="color:#f92672">-</span>self<span style="color:#f92672">.</span>erros[<span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>])
+        out <span style="color:#f92672">=</span> pterm<span style="color:#f92672">+</span>iterm<span style="color:#f92672">+</span>dterm
+        <span style="color:#66d9ef">return</span> out
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">main</span>():
+    timestep<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>
+    sample_num<span style="color:#f92672">=</span><span style="color:#ae81ff">100</span>
+    pid<span style="color:#f92672">=</span>PID(<span style="color:#ae81ff">50</span>)
+    Kp,Ki,Kd<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>,<span style="color:#ae81ff">0.2</span>,<span style="color:#ae81ff">0.1</span>
+    speeds<span style="color:#f92672">=</span>[]
+    <span style="color:#75715e">#last_input=3</span>
+    <span style="color:#66d9ef">for</span> t <span style="color:#f92672">in</span> range(timestep):
+        <span style="color:#66d9ef">for</span> s <span style="color:#f92672">in</span> range(sample_num):
+            pid<span style="color:#f92672">.</span>oscillation()
+            pid<span style="color:#f92672">.</span>controll<span style="color:#f92672">=</span>pid<span style="color:#f92672">.</span>compute(Kp,Ki,Kd,<span style="color:#ae81ff">1</span><span style="color:#f92672">/</span>sample_num)<span style="color:#f92672">+</span>pid<span style="color:#f92672">.</span>measure
+            <span style="color:#75715e">#last_input=pid.measure</span>
+            speeds<span style="color:#f92672">.</span>append(pid<span style="color:#f92672">.</span>measure)
+    print(speeds[:<span style="color:#ae81ff">15</span>])
+main()</code></pre></div>
+</div>
+<p>在确认过这个算法的有效性后，我尝试用De Jong的优化函数来测试一番：</p>
+<div class="src src-python">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">  lr<span style="color:#f92672">=</span><span style="color:#ae81ff">0.4</span>
+  gamma<span style="color:#f92672">=</span><span style="color:#ae81ff">0.6</span>
+  epsilon<span style="color:#f92672">=</span><span style="color:#ae81ff">1e-6</span>
+  Kd<span style="color:#f92672">=</span><span style="color:#ae81ff">0.03</span>
+  Ki<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>
+  Kp<span style="color:#f92672">=</span><span style="color:#ae81ff">0.1</span>
+
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">train_2d</span>(trainer):
+      x1,x2,s1,s2<span style="color:#f92672">=-</span><span style="color:#ae81ff">5</span>,<span style="color:#f92672">-</span><span style="color:#ae81ff">2</span>,[<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>],[<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>]
+      results<span style="color:#f92672">=</span>[(x1,x2)]
+      <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">20</span>):
+          x1,x2,s1,s2<span style="color:#f92672">=</span>trainer(x1,x2,s1,s2)
+          results<span style="color:#f92672">.</span>append((x1,x2))
+      print(<span style="color:#e6db74">&#39;epoch </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">, x1 </span><span style="color:#e6db74">{}</span><span style="color:#e6db74"> x2 </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#39;</span><span style="color:#f92672">.</span>format(i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>,x1,x2))
+      <span style="color:#66d9ef">return</span> results
+
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">pid_2d</span>(x1,x2,s1,s2):
+      s1<span style="color:#f92672">=</span>[(<span style="color:#ae81ff">0.2</span><span style="color:#f92672">*</span>x1),(<span style="color:#ae81ff">1</span><span style="color:#f92672">-</span>gamma)<span style="color:#f92672">*</span>(<span style="color:#ae81ff">0.2</span><span style="color:#f92672">*</span>x1)<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span>gamma<span style="color:#f92672">*</span>s1[<span style="color:#ae81ff">0</span>],(<span style="color:#ae81ff">0.2</span><span style="color:#f92672">*</span>x1)<span style="color:#f92672">-</span>s1[<span style="color:#ae81ff">0</span>]]
+      s2<span style="color:#f92672">=</span>[(<span style="color:#ae81ff">4</span><span style="color:#f92672">*</span>x2),(<span style="color:#ae81ff">1</span><span style="color:#f92672">-</span>gamma)<span style="color:#f92672">*</span>(<span style="color:#ae81ff">4</span><span style="color:#f92672">*</span>x2)<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span>gamma<span style="color:#f92672">*</span>s2[<span style="color:#ae81ff">0</span>],(<span style="color:#ae81ff">4</span><span style="color:#f92672">*</span>x2)<span style="color:#f92672">-</span>s2[<span style="color:#ae81ff">0</span>]]
+      x1<span style="color:#f92672">-=</span>(lr<span style="color:#f92672">*</span>(<span style="color:#ae81ff">1</span><span style="color:#f92672">+</span>Kp)<span style="color:#f92672">*</span>s1[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">+</span>Ki<span style="color:#f92672">*</span>s1[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">+</span>Kd<span style="color:#f92672">*</span>s1[<span style="color:#ae81ff">2</span>])
+      x2<span style="color:#f92672">-=</span>(lr<span style="color:#f92672">*</span>(<span style="color:#ae81ff">1</span><span style="color:#f92672">+</span>Kp)<span style="color:#f92672">*</span>s2[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">+</span>Ki<span style="color:#f92672">*</span>s2[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">+</span>Kd<span style="color:#f92672">*</span>s2[<span style="color:#ae81ff">2</span>])
+      <span style="color:#66d9ef">return</span> x1,x2,s1,s2
+  <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">show_trace_2d</span>(f,results): <span style="color:#75715e"># 目标函数的等值图</span>
+      <span style="color:#75715e"># 第一个*是为了把zip后的结果（两个list）提取出来，第二个*是为了把列表中所有元素提取出来</span>
+      plt<span style="color:#f92672">.</span>plot(<span style="color:#f92672">*</span>zip(<span style="color:#f92672">*</span>results),<span style="color:#e6db74">&#39;-o&#39;</span>,color<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;#ff7f0e&#39;</span>)
+      <span style="color:#75715e"># 利用两个坐标产生一个网格，返回的二维坐标是从下到上，从左到右的点</span>
+      x1,x2<span style="color:#f92672">=</span>np<span style="color:#f92672">.</span>meshgrid(np<span style="color:#f92672">.</span>arange(<span style="color:#f92672">-</span><span style="color:#ae81ff">5.5</span>,<span style="color:#ae81ff">1.0</span>,<span style="color:#ae81ff">0.1</span>),np<span style="color:#f92672">.</span>arange(<span style="color:#f92672">-</span><span style="color:#ae81ff">3.0</span>,<span style="color:#ae81ff">2.5</span>,<span style="color:#ae81ff">0.1</span>))
+      a<span style="color:#f92672">=</span>plt<span style="color:#f92672">.</span>contourf(x1,x2,f(x1,x2),<span style="color:#ae81ff">5</span>,cmap<span style="color:#f92672">=</span>plt<span style="color:#f92672">.</span>cm<span style="color:#f92672">.</span>Set2,extend<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;both&#39;</span>)
+      plt<span style="color:#f92672">.</span>colorbar(a)
+      <span style="color:#75715e">#plt.clabel(a,inline=True,fontsize=18)</span>
+      plt<span style="color:#f92672">.</span>xlabel(<span style="color:#e6db74">&#39;x1&#39;</span>)
+      plt<span style="color:#f92672">.</span>ylabel(<span style="color:#e6db74">&#39;x2&#39;</span>)
+      plt<span style="color:#f92672">.</span>show()
+
+  show_trace_2d(f_2d,train_2d(pid_2d))</code></pre></div>
+</div>
+<p>结果如下：
+<img src="/PID.png" alt="/PID.png" title="/PID.png" /></p>
+<p>
+得到这个结果之后我感觉这个方法确实具有可行性，后面只需要把这个写成pytorch的优化器，跑一跑深度神经网络进一步验证就OK了。但是很遗憾，我在github上搜Optimizer想要参考一下别人的代码，发现了<a href="https://github.com/jettify/pytorch-optimizer">这个</a>。里面居然有一个叫做PID的优化器，而且好像是CVPR2018的论文。后面我看了一下它的思想和我的一样，只不过我的理解积分，微分项的系数是超参，别人论文里面是把微分项的用拉普拉斯逆变换算出来了。虽然有点沮丧，自己花了一个星期的时间做出来的东西结果早就有了，但是后面还是去看了一下它的代码，发现其实它代码里参数还是自己调的，并且我用它的代码在minist上去跑Lenet发现效果太差，也可能是参数没调对根本就收敛不了，和论文里说的效果不一样。下面讲一下它的思想,以动量法为例,它的参数更新公式如下:</p>
+<p>把第(2)项展开得到</p>
+<p>
+\begin{equation}
+\theta_t= \theta_{t-1} - \eta g_t- \eta \sum_{r=1}^t \beta^r g_{t-r}
+\end{equation}</p>
+<p>
+训练一个神经网络最常见的算法是梯度下降法，即让损失到极小值点，此时参数梯度为0。因此第t个时刻梯度的误差就是g_t。从展开式可以看出，参数的更新和当前梯度误差，过去所有梯度误差都有关，因此动量法可以看作是一个PI模型。同理，再对NAG法分析。</p>
+<p>令θ<sub>t-1</sub>-γ v<sub>t-1</sub>=\dot{θ<sub>t-1</sub>}。NAG法可以变为如下</p>
+<p>同理把（2）展开得到</p>
+<p>可以发现NAG也是PI模型，只不过P参数更大了。</p>
+<p>
+总结：这一个星期还是有收获的，首先明白了一个简单的想法很可能有人已经做过了，因此自己动手前最好可以先自习查一下。第二，学会了怎么在pytorch中实现自己的优化器。</p>
+
+  </div>
+
+  <footer>
+    <hr class="end-line">
+
+    
+
+    
+
+    
+    
+  </footer>
+
+  <div class="comments">
+
+
+
+</div>
+
+
+</article>
+
+
+</body>
+<div class="foot">
+  
+  
+    &copy; 2019 - 2021 &#183; 
+    <a href="/">Home</a> · Theme <a href="https://github.com/RainerChiang/simpleness">Simpleness</a> Powered by <a href="https://gohugo.io/">Hugo</a> &#183;
+    <a href="#"><i class="fas fa-chevron-up"></i></a>
+  
+
+  
+</div>
+
+<script src="/js/lazyload.min.js"></script>
+<script>
+  var lazyImage = new LazyLoad({
+    container: document.getElementById('article')
+  });
+</script>
+
+
+</html>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on Hugo</title>
+    <link>http://108.160.143.157/posts/</link>
+    <description>Recent content in Posts on Hugo</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <copyright>[Home](/) &amp;#183; Theme [Simpleness](https://github.com/RainerChiang/simpleness) Powered by [Hugo](https://gohugo.io/)</copyright>
+    <lastBuildDate>Sat, 31 Jul 2021 11:09:38 +0800</lastBuildDate><atom:link href="http://108.160.143.157/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>PID优化器</title>
+      <link>http://108.160.143.157/posts/pid%E4%BC%98%E5%8C%96%E5%99%A8/</link>
+      <pubDate>Sat, 31 Jul 2021 11:09:38 +0800</pubDate>
+      
+      <guid>http://108.160.143.157/posts/pid%E4%BC%98%E5%8C%96%E5%99%A8/</guid>
+      <description>上个星期在回顾优化器的时候注意到动量法和物联网控制中的一个控制算法PID很像，并且很多优化器可以看作是PID的一种特殊形式。突发奇想能不能把这个算法用在优化器中。之前大概是我大三的时候在实验课上用matlab做过PID的实验，但是具体怎么实现早就忘了，于是乎在一番google下做了一个PID控制的DEMO。代码如下:
+# coding: utf-8 from collections import deque import random class PID(object): def __init__(self, sp): super(PID).__init__() self.erros = deque(maxlen=5) self.erros.extend([0,0,0,0,0]) self.sp = sp self.pv = 3 @property def measure(self): return self.pv @measure.setter def controll(self,v): self.pv=v def oscillation(self): self.pv+=random.normalvariate(0,1) def compute(self, Kp, Ki, Kd, ts): erro = self.sp-self.pv self.erros.append(erro) pterm = Kp*erro iterm = Ki*sum(self.erros)/len(self.erros) dterm = Kd*(self.erros[-1]-self.erros[-2]) out = pterm+iterm+dterm return out def main(): timestep=10 sample_num=100 pid=PID(50) Kp,Ki,Kd=0.1,0.2,0.1 speeds=[] #last_input=3 for t in range(timestep): for s in range(sample_num): pid.</description>
+    </item>
+    
+    <item>
+      <title>Emacs配置</title>
+      <link>http://108.160.143.157/posts/emacs%E9%85%8D%E7%BD%AE/</link>
+      <pubDate>Mon, 10 May 2021 14:14:12 +0800</pubDate>
+      
+      <guid>http://108.160.143.157/posts/emacs%E9%85%8D%E7%BD%AE/</guid>
+      <description>Introduction  用emacs快两年了，经历有些曲折。怎么说呢，一开始瞎折腾勉强知道emacs怎么用，然后每次要用什么功能自己从网上找代码，没有的话就没办法了，我也不会lisp。这样其实效率很低，后来发现了子龙山人的视屏，看完之后总算对emacs有了一个大概的了解。之后我东拼西凑了一些配置，也玩的不已乐乎。大概是19,20年的时候发现了vs code这东西，vs code真香！此后用了很长一段vs code，emacs也就偶尔用来做做笔记了。为什么最后还是放弃了vscode呢？因为我现在用的manjaro给它分配的内存太小了，平时看/写的代码不是很大，一个编辑器倒是占了很大的空间。相比于vs code ，vim,emacs打开文件（尤其是大文件）的速度是最快的，因此我还是换回emacs了。我也没那么多时间折腾了，于是找了一个比较好的基础配置–centaur emacs。这个帖子用来记录一下在我平时用的centaur比较多的一些功能，还有就是自己的配置。
+  config  tramp  通常来说，如果要在服务器上运行一些项目都是用git这样的托管平台的。但是有时不太方便用git，这个时候我们有两个解决方法（如果说不算直接到服务器上写代码这种方法的话–反正没有补全我是受不了），一是在本地写好代码然后手动用ssh或者rsync这样的工具传到服务器上，二是用一些更加强大的软件，让我们可以直接在本地编辑远程服务器上的文件。本人平时比较懒，我长期以来的做法是先把写好的项目传到服务器上，然后再到服务器上微调代码，这样也是尽量避免在服务器上改动代码。最近发现emacs其实是支持远程文件编辑的，emacs22.1以上包含了tramp（&amp;#34;Transparent Remote (file) Access, Multiple Protocol&amp;#34;），就是这个包让我们可以轻松做到远程文件编辑。所以我们只需要在服务器上安装最新的emacs就行了，如果是低版本的话可以参考这里来配置tramp。下面是使用emacs编辑我的vultr服务器上文件的例子： update on &amp;lt;2021-07-02 五&amp;gt; : 在阿里服务器上用Tramp总是超时，远程主机为centos。解决方法：在远程主机的zshrc/其它终端补全配置文件上添加一行：
+[[ $TERM == &amp;#34;dumb&amp;#34; ]] &amp;amp;&amp;amp; unsetopt zle &amp;amp;&amp;amp; PS1=&amp;#39;$ &amp;#39; &amp;amp;&amp;amp; return  参考：https://www.bounga.org/tips/2017/11/30/fix-emacs-tramp-lag-and-timeout/
+  ag  ag是一个用来搜索工程下所有文件内容的方案。要在emacs中使用ag，需要确保电脑上已经装好了ag。centaur中已经安装好了ag包，只用M-x ag就能调用ag后端。下面是使用ag命令的结果： 如果想要搜索工程下的文件名，那么可以使用find-grep-dired函数或者project-find-file。   hydra  emacs给人最明显的一个感受就是要记各种各样的快捷键！尤其是当我们有几百个包的时候，绝大多数快捷键是很少用到的，但是一旦要用的时候就会头疼了。尽管可以用describe keybinding/function这样的方式来查找所需要的功能，但是这样还是不太方便。hydra可以以一种很优雅的方式解决了这个问题，我只需要按下引导键，hydra会提供一个面板来使用各种快捷键，尤其是hydra不会马上退出,于是我可以在这个模式下连续地按下各种快捷键。来看看centaur中对hydra的使用，按下&amp;lt;f6&amp;gt;看到效果如下： 我感觉hydra很好用，于是自己写了一段配置来管理org编辑代码的快捷方式。按C-o可以看到效果。
+;;org hydra ;; (defhydra hydra-awesome (awesome-map awesome-binding awesome-plist) ;; awesome-docstring ;; awesome-head-1 ;; awesome-head-2 ;; awesome-head-3 ;; .</description>
+    </item>
+    
+    <item>
+      <title>微分方程计算</title>
+      <link>http://108.160.143.157/posts/%E5%BE%AE%E5%88%86%E6%96%B9%E7%A8%8B%E8%AE%A1%E7%AE%97/</link>
+      <pubDate>Thu, 15 Apr 2021 09:55:08 +0800</pubDate>
+      
+      <guid>http://108.160.143.157/posts/%E5%BE%AE%E5%88%86%E6%96%B9%E7%A8%8B%E8%AE%A1%E7%AE%97/</guid>
+      <description>之前我已经介绍过数值计算中的积分计算，现在我们来看看对于微分方程是怎么样的。
+ 首先给出问题描述： 给定微分方程y&amp;#39;=f(x,y)和它的初值 $ y(a) $ ,求 $ y(b) $
+ 根据Newton-Leibniz公式， \begin{aligned} y(b)-y(a)=\int_{a}^{b} f(x,y) dx \end{aligned}
+ 由此可以看出数值计算微分方程和积分计算的区别–里面被积函数是x的隐函数，它不仅依赖于x，还和y有关。 我会从前向欧拉法开始，介绍解决这类问题的一些方法。
+前向欧拉法  前向欧拉法是非常经典的数值计算微分方程的做法，后面的方法只不过都是基于它的改进而已。 考虑一个简单的初值问题(IVP),如下所示，我们需要求出x=1时，y的取值。
+ \begin{aligned} y&amp;#39;=f(x,y)=x^2+y^2 \\ y(0)=1 \end{aligned}
+ 前向欧拉法用当前点的导数值代替了整个区间的导数值，忽略了二阶及以上导数信息。
+ \begin{aligned} \int_{a}^{b} f(x,y) dx =f(a,y(a))(b-a) \end{aligned}
+ 用此公式去计算初值问题
+ \begin{aligned} y(1)-y(0)=\int_{0}^{1} f(0,1) dx =1 \end{aligned} 因此y(1)=2。为了减小误差可以取一个很小的步长，例如h=0.01,进行多次迭代。并且我们很容易发现步长取得越小，误差越小，当然这样迭代的时间也会变长。下面是具体的做法：
+   x y f(x,y)     0 1 1   0.01 1*0.01 0.0002   0.</description>
+    </item>
+    
+    <item>
+      <title>积分计算</title>
+      <link>http://108.160.143.157/posts/%E7%A7%AF%E5%88%86%E8%AE%A1%E7%AE%97/</link>
+      <pubDate>Tue, 13 Apr 2021 00:00:00 +0000</pubDate>
+      
+      <guid>http://108.160.143.157/posts/%E7%A7%AF%E5%88%86%E8%AE%A1%E7%AE%97/</guid>
+      <description>积分计算是数值计算中一个古老的问题了，对于一个积分问题$ \int_{a}^{b} f(x)dx$，大多数时候我们都求不出f(x)的原函数，但是我们可以用别的函数来近似f(x)从而求得数值解。接下来我会介绍几个常用的近似方法，并给出它们的误差分析。先给出一些定理方便后面的分析：
+  设 $f \in C^0[a,b],f(a)=f(b)=0$ 如果f在(a,b)中二阶可导
+  则$\exists \xi \in (a,b)$使得
+ \begin{equation} \tag{1} \int_{a}^{b} f(x)dx= - \frac{1}{12}f&amp;#39;&amp;#39;(\xi)(b-a)^3 \end{equation}
+  设 $f \in C^0[a,b],f(a)=f(b)=0$ 如果f在(a,b)中二阶可导
+  则$\exists \xi \in (a,b)$使得
+ \begin{equation} \tag{2} \int_{a}^{b} f(x)dx= f(\frac{a+b}{2})(b-a)+ \frac{1}{24}f&amp;#39;&amp;#39;(\xi)(b-a)^3 \end{equation}
+  设f是n阶可导函数，且f(x)=0 有n个不同的解 $ \{x_i\}_{i=1}^{n}$ 则任给 $c \in [a,b],$ 存在 $\xi \in (a,b)$, 使得 \begin{equation} \tag{3} f(c)= \frac{1}{n!} f^{(n)}(\xi) \prod \limits_{i=1}^{n}(c-x_i) \end{equation}</description>
+    </item>
+    
+    <item>
+      <title>hugo博客搭建</title>
+      <link>http://108.160.143.157/posts/first-blog/</link>
+      <pubDate>Mon, 12 Apr 2021 10:14:38 +0800</pubDate>
+      
+      <guid>http://108.160.143.157/posts/first-blog/</guid>
+      <description>这是一篇用hugo搭建博客的教程，和网上大多数用github托管的方式不同，我们这里用自己的服务器来管理。你需要确认服务器上安装了hugo再进行下面的操作，关于安装的部分我不打算在这里讲解。所以直接进入正题吧。
+远程服务器配置  1.因为hugo默认使用1313端口监听，所以我们防火墙要开启1313端口的tcp服务，以我的centos系统为例，开启防火墙端口的命令为:
+firewall-cmd --zone=public --add-port=1313/tcp --permanent firewall-cmd --reload #更新防火墙配置    hugo配置  当我们安装好hugo以后,你如果安装网上的教程跑&amp;#34;hugo server&amp;#34;这个命令会发现 别人的电脑是无法访问你的博客的，解决方法如下：
+hugo server --bind=&amp;#34;0.0.0.0&amp;#34; #允许全网段访问  这时用自己的电脑试试，发现可以访问啦！但还有一个小小的问题，在点击自己的博文发现解析出来的地址是localhost:posts/XXX,然后访问不了博文。这是因为对于服务器来说，它的root就是localhost，你在服务器上是可以打开自己的博文的，但别人要看就必须有明确的ip地址或者域名。按照官网的资料，我们需要在config.toml中把baseUrl改成:
+baseUrl=&amp;#34;domain.com&amp;#34; #这里domain换成自己购买的域名  我自己买了一个外国的服务器，暂时还没有域名，所以我改成了自己的ip地址。但奇怪的是那个地址的问题还是没有解决，我们需要在运行hugo的时候加上baseUrl参数(这好像是一个bug)，最后命令变成了这样：
+hugo server --baseUrl=xxx.xxx.xx.xx --bind=0.0.0.0    MathJax配置  写博客难免会涉及到一些数学公式，这里我打算用MathJax来提供数学公式的渲染。非常感谢匿蟒提供的方案，以下是具体解决步骤。
+  在你用的theme文件夹下找到layouts/partials，在下面建立一个mathjax.html
+{{ if .Params.math }} &amp;lt;script&amp;gt; MathJax = { tex: { inlineMath: [[&amp;#34;$&amp;#34;, &amp;#34;$&amp;#34;]], }, displayMath: [ [&amp;#34;$$&amp;#34;, &amp;#34;$$&amp;#34;], [&amp;#34;\[\[&amp;#34;, &amp;#34;\]\]&amp;#34;], ], svg: { fontCache: &amp;#34;global&amp;#34;, }, }; &amp;lt;/script&amp;gt; &amp;lt;script src=&amp;#34;https://polyfill.</description>
+    </item>
+    
+  </channel>
+</rss>

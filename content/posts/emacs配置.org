@@ -1,0 +1,90 @@
+---
+title: "Emacs配置"
+date: 2021-05-10T14:14:12+08:00
+draft: false
+---
+
+* Introduction
+用emacs快两年了，经历有些曲折。怎么说呢，一开始瞎折腾勉强知道emacs怎么用，然后每次要用什么功能自己从网上找代码，没有的话就没办法了，我也不会lisp。这样其实效率很低，后来发现了子龙山人的视屏，看完之后总算对emacs有了一个大概的了解。之后我东拼西凑了一些配置，也玩的不已乐乎。大概是19,20年的时候发现了vs code这东西，vs code真香！此后用了很长一段vs code，emacs也就偶尔用来做做笔记了。为什么最后还是放弃了vscode呢？因为我现在用的manjaro给它分配的内存太小了，平时看/写的代码不是很大，一个编辑器倒是占了很大的空间。相比于vs code ，vim,emacs打开文件（尤其是大文件）的速度是最快的，因此我还是换回emacs了。我也没那么多时间折腾了，于是找了一个比较好的基础配置--centaur emacs。这个帖子用来记录一下在我平时用的centaur比较多的一些功能，还有就是自己的配置。
+
+* config
+** tramp
+通常来说，如果要在服务器上运行一些项目都是用git这样的托管平台的。但是有时不太方便用git，这个时候我们有两个解决方法（如果说不算直接到服务器上写代码这种方法的话--反正没有补全我是受不了），一是在本地写好代码然后手动用ssh或者rsync这样的工具传到服务器上，二是用一些更加强大的软件，让我们可以直接在本地编辑远程服务器上的文件。本人平时比较懒，我长期以来的做法是先把写好的项目传到服务器上，然后再到服务器上微调代码，这样也是尽量避免在服务器上改动代码。最近发现emacs其实是支持远程文件编辑的，emacs22.1以上包含了tramp（"Transparent Remote (file) Access, Multiple Protocol"），就是这个包让我们可以轻松做到远程文件编辑。所以我们只需要在服务器上安装最新的emacs就行了，如果是低版本的话可以参考[[https://lifegoo.pluskid.org/wiki/EmacsTRAMP.html][这里]]来配置tramp。下面是使用emacs编辑我的vultr服务器上文件的例子：
+[[/tramp1.png]]
+update on <2021-07-02 五> :
+在阿里服务器上用Tramp总是超时，远程主机为centos。解决方法：在远程主机的zshrc/其它终端补全配置文件上添加一行：
+#+begin_example
+[[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
+#+end_example
+参考：[[https://www.bounga.org/tips/2017/11/30/fix-emacs-tramp-lag-and-timeout/]]
+** ag
+ag是一个用来搜索工程下所有文件内容的方案。要在emacs中使用ag，需要确保电脑上已经装好了ag。centaur中已经安装好了ag包，只用M-x ag就能调用ag后端。下面是使用ag命令的结果：
+[[/ag.png]]
+如果想要搜索工程下的文件名，那么可以使用find-grep-dired函数或者project-find-file。
+[[/find-grep-dired.png]]
+** hydra
+emacs给人最明显的一个感受就是要记各种各样的快捷键！尤其是当我们有几百个包的时候，绝大多数快捷键是很少用到的，但是一旦要用的时候就会头疼了。尽管可以用describe keybinding/function这样的方式来查找所需要的功能，但是这样还是不太方便。hydra可以以一种很优雅的方式解决了这个问题，我只需要按下引导键，hydra会提供一个面板来使用各种快捷键，尤其是hydra不会马上退出,于是我可以在这个模式下连续地按下各种快捷键。来看看centaur中对hydra的使用，按下<f6>看到效果如下：
+[[/hydra.png]]
+我感觉hydra很好用，于是自己写了一段配置来管理org编辑代码的快捷方式。按C-o可以看到效果。
+#+begin_src emacs-lisp
+;;org hydra
+;; (defhydra hydra-awesome (awesome-map awesome-binding awesome-plist)
+;;   awesome-docstring
+;;   awesome-head-1
+;;   awesome-head-2
+;;   awesome-head-3
+;;   ...)
+(global-set-key
+ (kbd "C-o")
+ (defhydra hydra-org-edit-menu (:color pink
+                                :hint nil)
+   "
+  ^SRC^
+^^^^^---------
+_c_: code
+_s_: save
+_e_: exit
+_a_: abort
+"
+   ("c" org-edit-src-code)
+   ("s" org-edit-src-save)
+   ("e" org-edit-src-exit)
+   ("a" org-edit-src-abort)
+   ("q" nil "quit")))
+#+end_src
+** elpy
+elpy是emacs上独有的为python提供补全后端支持的包，它集成了非常多使用的功能，例如虚拟环境支持，snippet，语法检查。安装elpy后配置如下：
+#+begin_src emacs-lisp
+(use-package elpy
+  :ensure t
+  :defer t
+  :init
+  (advice-add 'python-mode :before 'elpy-enable)
+  (setq elpy-rpc-backend "jedi")
+  (setenv "WORKON_HOME" "~/miniconda3/envs")
+  (add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1))))
+#+end_src
+想要有补全功能需要安装jedi或者rope中的一个，同样的语法检查也需要自己安装。安装完后用 elpy-config检查自己的配置是否正确。
+[[/elpy_config.png]]
+** easy-hugo
+easy-hugo是一个帮助我们写hugo博客的工具，安装好easy-hugo之后添加以下配置:
+#+begin_src emacs-lisp
+;;easy-hugo
+(use-package easy-hugo
+  :init
+  (setq easy-hugo-basedir "~/yourblogroot")
+  (setq easy-hugo-default-ext ".org")
+  (setq easy-hugo-previewtime "300")
+  (setq easy-hugo-postdir "content/posts")
+  )
+#+end_src
+效果如下：
+[[/easyhugo.png]]
+
+** vterm
+vterm是emacs里面的shell终端模拟器，之前一直用的是eshell命令来调出终端，vterm的终端功能更加强大，它可以很好配合之前安装的oh-my-zsh(不足的是不能在终端里进行复制)。在centaur中按<f9>可以调用vterm。
+** imenu
+imenu是对文档生成结构索引的菜单工具。它常用于在代码中检索某个函数/变量。下面是counsel-imenu的使用：
+[[/imenu.png]]
+** counsel/ivy/swiper
+从[[https://github.com/abo-abo/swiper][这里]]我们可以知道，Ivy是一个为emacs设计的通用的补全机制，这是补全的核心。Counsel是一个基于ivy的增强补全的实用工具，对emacs的一些命令提供补全。swiper是单独的一个isearch增强工具。开启ivy-mode之后使用M-x可以看到效果如下。[[/ivy-mode.png]]

@@ -1,0 +1,36 @@
+---
+title: "双系统引导修复"
+date: 2021-10-11T21:30:09+08:00
+draft: true
+---
+
+  背景： 本人电脑是惠普光影精灵，windows10+manjaro双系统。平时一直用manjaro工作，突然需要使用windows，在重启进入windows完成工作后，再进manjaro报错，只能进入到grub rescue界面。错误提示： file 'boot/grub/x86_64-efi/normal.mod' not found。忙了整整一天解决这个问题，记录下过程。
+*  试错
+第一反映是去manjaro论坛寻求帮助，非常幸运找到了两个问题很相似的[[https://bbs.archlinux.org/viewtopic.php?id=159457][帖子]]，还有[[https://zhuanlan.zhihu.com/p/155981949][这个]]。按照上面的讨论做了如下尝试
+  #+begin_example
+    grub rescue> ls (hd1,gpt x) // 一个个尝试找到根目录在的分区，x根据自己的情况
+  grub rescue> set root=(hd1, gpt 10) //设置root为找到后的分区
+  grub rescue> set prefix=(hd1,gpt 10)/boot/grub
+  grub rescue> insmod normal
+  #+end_example
+之后提示早不到normal.mod,我用ls一看，prefix下果然是没有这个文件，根据archlinux上的讨论 /usr/lib/grub/x86_64-efi 下有这个文件，于是把prefix设置成这个目录。之后错误变成grub_calloc not found。在查找各种资料后，尤其是这个[[https://forum.manjaro.org/t/dualboot-not-working-cannot-access-bios-stuck-in-grub-rescue/33605][帖子]]，我觉得重新安装grub引导可以解决问题，并且正好我手里有之前安装manjaro的系统u盘。
+*  解决
+    grub恢复直接按照[[https://wiki.manjaro.org/index.php?title=GRUB/Restore_the_GRUB_Bootloader][官方]]的步骤来，初步尝试之后依然无法解决，然后尝试结合知乎上的步骤做了如下修改：
+    1. 在使用mount挂载根目录，boot分区之前先使用命令：
+        #+begin_example
+       manjaro-chroot -a
+       #+end_example
+       在官方教程中这个命令是在挂载分区之后
+
+    2. grub路径应修改为挂载后的/mnt下的boot路径,更新配置同理（最好官方的命令也试试）
+       #+begin_example
+       grub-install --target=x86_64-efi --efi-directory=/mnt/boot/efi --bootloader-id=manjaro --recheck
+
+       grub-mkconfig -o /mnt/boot/grub/grub.cfg
+
+       mount -t efivarfs efivarfs /mnt/sys/firmware/efi/efivars
+       #+end_example
+*  总结
+ + 不要轻易放弃，多做尝试
+ + 不要轻易尝试非官方给出的命令（除非你非常清除它在干什么），尤其是一些过时的帖子  
+   

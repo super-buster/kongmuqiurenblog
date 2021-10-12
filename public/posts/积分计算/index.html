@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Hugo 0.87.0" />
+  
+<script>
+  MathJax = {
+    tex: {
+      inlineMath: [["$", "$"]],
+    },
+    displayMath: [
+      ["$$", "$$"],
+      ["\[\[", "\]\]"],
+    ],
+    svg: {
+      fontCache: "global",
+    },
+  };
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+
+
+  <title> 积分计算 |  Hugo</title>
+  <meta name="description" content="A simple and concise hugo theme.">
+  <link rel="stylesheet" href="http://108.160.143.157css/simpleness.css">
+  <link rel="canonical" href="http://108.160.143.157/posts/%E7%A7%AF%E5%88%86%E8%AE%A1%E7%AE%97/">
+  <link rel="alternate" type="application/rss+xml" href="" title="Hugo">
+  
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+</head>
+
+
+<body>
+  <header class="menus">
+  
+
+  <nav >
+    
+    <a href="/"> Home</a>
+    
+    <a href="/about/"> About</a>
+    
+  </nav>
+
+  <nav class="fontawesome">
+    
+    <a href="https://github.com/RainerChiang" target="_blank">
+        <i title="GitHub" class="fab fa-github"></i>
+    </a>
+    
+    
+    <a href="http://108.160.143.157/index.xml" target="_blank">
+        <i title="RSS" class="fas fa-rss"></i>
+    </a>
+    
+  </nav>
+  
+  
+  <div class="hidden description">A simple and concise hugo theme.</div>
+  
+</header>
+
+<article class="article">
+  <header>
+    <h1 style="text-align: center;" >积分计算</h1>
+
+    <div class="post-meta">
+    
+      <time datetime="2021-04-13T00:00:00Z">April 13, 2021</time> &nbsp; 
+    
+
+     &nbsp;
+
+    
+    
+    
+
+    
+      <i class="far fa-clock"></i>
+      
+      
+      
+
+      
+        7 min
+      
+      5 s
+      &nbsp;
+    
+
+    
+    </div>
+  </header>
+
+   
+
+  <div class="text">
+    
+<p>
+  积分计算是数值计算中一个古老的问题了，对于一个积分问题$ \int_{a}^{b} f(x)dx$，大多数时候我们都求不出f(x)的原函数，但是我们可以用别的函数来近似f(x)从而求得数值解。接下来我会介绍几个常用的近似方法，并给出它们的误差分析。先给出一些定理方便后面的分析：</p>
+<ul>
+<li>
+<p>设 $f \in C^0[a,b],f(a)=f(b)=0$ 如果f在(a,b)中二阶可导</p>
+</li>
+</ul>
+<p>则$\exists \xi \in (a,b)$使得</p>
+<p>
+ \begin{equation} \tag{1} 
+ \int_{a}^{b} f(x)dx= - \frac{1}{12}f&#39;&#39;(\xi)(b-a)^3
+ \end{equation}</p>
+<ul>
+<li>
+<p>设 $f \in C^0[a,b],f(a)=f(b)=0$ 如果f在(a,b)中二阶可导</p>
+</li>
+</ul>
+<p>则$\exists \xi \in (a,b)$使得</p>
+<p>
+ \begin{equation} \tag{2} 
+ \int_{a}^{b} f(x)dx= f(\frac{a+b}{2})(b-a)+ \frac{1}{24}f&#39;&#39;(\xi)(b-a)^3
+ \end{equation}</p>
+<ul>
+<li>
+<p>设f是n阶可导函数，且f(x)=0 有n个不同的解 $ \{x_i\}_{i=1}^{n}$
+则任给 $c \in [a,b],$ 存在 $\xi \in (a,b)$, 使得
+\begin{equation} \tag{3} 
+   f(c)= \frac{1}{n!} f^{(n)}(\xi) \prod \limits_{i=1}^{n}(c-x_i) 
+\end{equation}</p>
+</li>
+</ul>
+<div id="outline-container-headline-1" class="outline-2">
+<h2 id="headline-1">
+朴素法
+</h2>
+<div id="outline-text-headline-1" class="outline-text-2">
+<p>朴素法的思想非常简单粗暴，直接用x=a这一点的函数值代替整个区间的函数值。用Taylor展开，
+$ f(x)=f(a)+f&#39;(a)(x-a)+O(h) $，朴素法忽略了一阶及其高阶项,因此有</p>
+<p>
+$$ \int_{a}^{b} f(x) dx=\int_{a}^{b}f(a)dx $$</p>
+<p>
+对此进行误差分析,设$M_1=sup|f&#39;(x)|$,
+\begin{aligned}
+\\| \int_{a}^{b} [f(x)-f(a)]dx | &amp;= | \int_{a}^{b} f&#39;(\xi)(x-a) dx | \\
+&amp;\leq M_1  \int_{a}^{b}|(x-a)|dx \\
+&amp;\leq \frac{M_1 }{2}(b-a)^2
+\end{aligned}</p>
+</div>
+</div>
+<div id="outline-container-headline-2" class="outline-2">
+<h2 id="headline-2">
+中点矩形法
+</h2>
+<div id="outline-text-headline-2" class="outline-text-2">
+<p>一个简单的改进方法就是用区间中点的函数值来代替整个区间的函数值。
+\begin{aligned} \int_{a}^{b}f(x)dx=\int_{a}^{b}f(\frac{a+b}{2})dx \end{aligned}</p>
+<p>
+为什么这样做能减小误差？下面我们对它进行分析。设$f \in C^0[a,b],M_1=sup|f&#39;(x)| $, 用f(c)(b-a)来估计积分值,$c \in [a,b] $。
+\begin{aligned}
+ \\| \int_{a}^{b} (f(x) -f(c)) dx| &amp;= |\int_{a}^{b} f&#39;(\xi)(x-c)dx |  \\
+&amp;\leq \int_{a}^{b} |f&#39;(\xi)(x-c)|dx \\
+&amp;\leq M_1 \int_{a}^{b} |(x-c)|dx \\
+&amp;= \frac{1}{2}M_1[(c-a)^2+(b-c)^2]
+\end{aligned}</p>
+<p>
+由均值不等式，可知当$c=\frac{a+b}{2}$时误差最小。这就是为什么中点矩形法要更好的原因。把c的值带入，得到
+\begin{equation}
+ \\|\int_{a}^{b} f(x)dx -f(\frac{a+b}{2})(b-a)| \leq \frac{1}{4}M_1(b-a)^2
+\end{equation}
+事实上若f二阶可导，由定理2,设$M_2=sup|f&#39;&#39;(x)|$,可得</p>
+<p>
+\begin{equation}
+    \\| \int_{a}^{b} f(x)dx-f(\frac{a+b}{2})(b-a) | \leq \frac{1}{24}M_2(b-a)^3
+\end{equation}</p>
+</div>
+</div>
+<div id="outline-container-headline-3" class="outline-2">
+<h2 id="headline-3">
+梯形法
+</h2>
+<div id="outline-text-headline-3" class="outline-text-2">
+<p>另外一种改进的方法是利用弦边来近似曲线。那么
+\begin{aligned} \int_{a}^{b} f(x)dx=\int_{a}^{b} \frac{f(a)+f(b)}{2}dx \end{aligned}
+f&#39;(x)的弦方程为
+\[ l(x)=\frac{x-b}{a-b}f(a) + \frac{x-a}{b-a}f(b) \]
+有同样的，进行误差分析：令g(x)=f(x)-l(x). 则有g(a)=g(b)=0, 根据定理1
+\[  | \int_{a}^{b} f(x)dx- \frac{f(a)+f(b)}{2}(b-a)| \leq  \frac{M_2}{12}(b-a)^3 \]</p>
+</div>
+</div>
+<div id="outline-container-headline-4" class="outline-2">
+<h2 id="headline-4">
+simpson公式
+</h2>
+<div id="outline-text-headline-4" class="outline-text-2">
+<p>simpson公式实际上是下面Newton-cotes公式的一个特例。它的思想在于利用复合抛物线来拟合导数曲线，因此这个方法又叫做复合抛物线法。我们构造的拟合曲线要过这三个点$x_0=a,x_1=\frac{a+b}{2},x_2=b$,用二阶的Lagrange插值多项式来表示：
+\[ p_2(x)=\sum \limits_{i=0}^2 \prod  \limits_{j \neq i} \frac{x-x_i}{x_i-x_j} f(x_i)\]
+可以看到p(x)其实是三条抛物线相加得到的。对其积分，得
+\[ \int_{a}^{b} p_2(x) dx= \frac{b-a}{6} \bigg [f(a)+4f(\frac{a+b}{2})+f(b) \bigg] \]
+最后的公式为：
+\begin{aligned}
+\int_{a}^{b} f(x)dx=\frac{1}{6}\int_{a}^{b} f(a)+4f(\frac{a+b}{2})+f(b) dx
+\end{aligned}</p>
+<p>
+对其进行误差估计，根据(3.2)式可得
+\begin{aligned}
+    \\| \int_{a}^{b} f(x)dx- \int_{a}^{b} p_2(x)dx | &amp;= | \frac{1}{6}f&#39;&#39;&#39;(\xi) \int_{a}^{b} \prod \limits_{i=0}^{2}(x-x_i) | \\
+    &amp; \leq \frac{1}{6} M_3 \int_{a}^{b} (x-a)|x-\frac{a+b}{2}|(b-x) dx \\
+    &amp;=\frac{1}{6} M_3   \int_{\frac{a-b}{2}}^{\frac{b-a}{2}} | [(\frac{b-a}{2})^2-t^2]t| dt \\
+    &amp;= \frac{M_3}{192}(b-a)^4
+\end{aligned}</p>
+</div>
+</div>
+<div id="outline-container-headline-5" class="outline-2">
+<h2 id="headline-5">
+Newton-cotes公式
+</h2>
+<div id="outline-text-headline-5" class="outline-text-2">
+<p>Newton-cotes公式利用函数m阶插值多项式来逼近导函数。把区间等分m份, 插值点为
+$x_i =a+ \frac{i}{m}(b-a), i=0,1,...m.$
+拟合函数曲线表达式为：
+\[   p_{m}(x)= \sum \limits_{i=0}^{m} \bigg[ \prod \limits_{j \neq i} \frac{(x-x_j)}{(x_i-x_j)}  \bigg] f(x_i)  \]
+其积分计算过程如下：</p>
+<p>
+\begin{aligned}
+      \int_{a}^{b} p_{m}(x) dx &amp;= \sum \limits_{i=0}^m  f(x_i) \int_{a}^{b} \prod \limits_{j \neq i}  \frac{(x-x_j)}{(x_i-x_j)}dx \\
+     &amp; \overset{\frac{x-a}{b-a}=\frac{t}{m}}{===} \sum \limits_{i=0}^m  f(x_i) \int_{0}^{m} \prod \limits_{j \neq i} \frac{t-j}{i-j} \frac{b-a}{m} dt \\
+     &amp;=  \sum \limits_{i=0}^m  f(x_i) \frac{b-a}{m} \frac{1}{i!(m-i)!(-1)^{m-i}} \int_{0}^{m} \prod \limits_{j \neq i} (t-j) dt \\ 
+     &amp;=  \sum \limits_{i=0}^m  f(x_i) \bigg[ \frac{(b-a)(-1)^{m-i}}{m(m-i)!\quad i!} \int_{0}^{m} \prod \limits_{j \neq i} (t-j) dt  \bigg]
+\end{aligned}</p>
+<p>
+最后的公式为：
+\begin{aligned}
+\int_{a}^{b} f(x)dx= \int_{a}^{b} \sum \limits_{i=0}^m  \bigg[ \frac{(-1)^{m-i}}{m(m-i)!\quad i!} \int_{0}^{m} \prod \limits_{j \neq i} (t-j) dx  \bigg] f(x_i) dx
+\end{aligned}</p>
+<p>
+接下来进行误差分析。等式两边对x积分，根据定理3有
+\begin{aligned}
+    \\| \int_{a}^{b} f(x)dx - \int_{a}^{b} p_{m}(x) dx | &amp;= | \int_{a}^{b} \frac{f^{m+1}(\xi)}{(m+1)!} \prod \limits_{i=0}^{m}(x-x_i) dx |\\
+    &amp; = | \frac{f^{m+1}(\xi)}{(m+1)!}  \frac{b-a}{m} | \int_{0}^{m}   \prod_{i=0}^{m}| (t-i) \frac{b-a}{m}| dt  \\
+    &amp; \leq \frac{M_{m+1}}{(m+1)!} (\frac{b-a}{m})^{m+2} \int_{0}^{m} \prod \limits_{0}^{m} |(t-i)| dt
+\end{aligned}</p>
+</div>
+</div>
+<div id="outline-container-headline-6" class="outline-2">
+<h2 id="headline-6">
+比较
+</h2>
+<div id="outline-text-headline-6" class="outline-text-2">
+<p>从下图可以方便地看出各个方法的差异。
+<img src="/积分计算.png" alt="/积分计算.png" title="/积分计算.png" />
+举一个简单的例子来感受一下：$求\int_{1}^{2}\frac{e^x}{x}dx$</p>
+<table>
+<thead>
+<tr>
+<th>所用方法</th>
+<th>近似表达式</th>
+<th class="align-right">积分值</th>
+<th>相对误差</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>积分计算器</td>
+<td>-</td>
+<td class="align-right">3.059116539645954</td>
+<td>以此为参考</td>
+</tr>
+<tr>
+<td>朴素法</td>
+<td>f(a)</td>
+<td class="align-right">2.718281828459045</td>
+<td>11.14%</td>
+</tr>
+<tr>
+<td>中点矩形法</td>
+<td>f((a+b)/2)</td>
+<td class="align-right">2.9877927135587097</td>
+<td>2.33%</td>
+</tr>
+<tr>
+<td>梯形法</td>
+<td>[f(a)+f(b)]/2</td>
+<td class="align-right">3.206404938962185</td>
+<td>4.81%</td>
+</tr>
+<tr>
+<td>simpson公式</td>
+<td>[f(a)+4f((a+b)/2)+f(b)]/6</td>
+<td class="align-right">3.0606634553598684</td>
+<td>0.05%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-headline-7" class="outline-2">
+<h2 id="headline-7">
+总结
+</h2>
+<div id="outline-text-headline-7" class="outline-text-2">
+<ul>
+<li>
+<p>从上面的对比我们可以发现simpson法已经可以很好地接近真实值了，并且表达式也比较简单，我们通常会优先考虑用此方法来计算积分。
+如果想要进一步减小误差可以把区间等分为m份，对每个小区间用simpson法。</p>
+</li>
+<li>
+<p>为什么不考虑直接用Taylor展开来逼近f(x)?其实这种方法理论上也是可以的，但是为了保证精度f需要展开到二阶以上，这样不仅要计算函数值，还要计算多个高阶导数，相比于simpson法来说复杂了不少。</p>
+</li>
+</ul>
+</div>
+</div>
+
+  </div>
+
+  <footer>
+    <hr class="end-line">
+
+    
+
+    
+
+    
+    
+  </footer>
+
+  <div class="comments">
+
+
+
+</div>
+
+
+</article>
+
+
+</body>
+<div class="foot">
+  
+  
+    &copy; 2019 - 2021 &#183; 
+    <a href="/">Home</a> · Theme <a href="https://github.com/RainerChiang/simpleness">Simpleness</a> Powered by <a href="https://gohugo.io/">Hugo</a> &#183;
+    <a href="#"><i class="fas fa-chevron-up"></i></a>
+  
+
+  
+</div>
+
+<script src="/js/lazyload.min.js"></script>
+<script>
+  var lazyImage = new LazyLoad({
+    container: document.getElementById('article')
+  });
+</script>
+
+
+</html>

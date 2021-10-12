@@ -1,0 +1,78 @@
+---
+title: "hugo博客搭建"
+date: 2021-04-12T10:14:38+08:00
+draft: false
+enableDisqus: true
+---
+#+author: 空木秋人
+这是一篇用hugo搭建博客的教程，和网上大多数用github托管的方式不同，我们这里用自己的服务器来管理。你需要确认服务器上安装了hugo再进行下面的操作，关于安装的部分我不打算在这里讲解。所以直接进入正题吧。
+* 远程服务器配置
+1.因为hugo默认使用1313端口监听，所以我们防火墙要开启1313端口的tcp服务，以我的centos系统为例，开启防火墙端口的命令为:
+#+begin_src sh
+    firewall-cmd --zone=public --add-port=1313/tcp --permanent
+    firewall-cmd --reload #更新防火墙配置
+#+end_src
+* hugo配置
+当我们安装好hugo以后,你如果安装网上的教程跑"hugo server"这个命令会发现 别人的电脑是无法访问你的博客的，解决方法如下：
+#+begin_src sh
+  hugo server --bind="0.0.0.0" #允许全网段访问
+#+end_src
+这时用自己的电脑试试，发现可以访问啦！但还有一个小小的问题，在点击自己的博文发现解析出来的地址是localhost:posts/XXX,然后访问不了博文。这是因为对于服务器来说，它的root就是localhost，你在服务器上是可以打开自己的博文的，但别人要看就必须有明确的ip地址或者域名。按照官网的资料，我们需要在config.toml中把baseUrl改成:
+#+begin_example
+baseUrl="domain.com" #这里domain换成自己购买的域名
+#+end_example
+ 我自己买了一个外国的服务器，暂时还没有域名，所以我改成了自己的ip地址。但奇怪的是那个地址的问题还是没有解决，我们需要在运行hugo的时候加上baseUrl参数(这好像是一个bug)，最后命令变成了这样：
+ #+begin_src sh
+ hugo server --baseUrl=xxx.xxx.xx.xx --bind=0.0.0.0
+ #+end_src
+
+* MathJax配置
+写博客难免会涉及到一些数学公式，这里我打算用MathJax来提供数学公式的渲染。非常感谢[[http://weibo.com/u/2837672545][匿蟒]]提供的方案，以下是具体解决步骤。
++ 在你用的theme文件夹下找到layouts/partials，在下面建立一个mathjax.html
+  #+begin_example
+{{ if .Params.math }}
+<script>
+  MathJax = {
+    tex: {
+      inlineMath: [["$", "$"]],
+    },
+    displayMath: [
+      ["$$", "$$"],
+      ["\[\[", "\]\]"],
+    ],
+    svg: {
+      fontCache: "global",
+    },
+  };
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+></script>
+{{ end }}
+  #+end_example
++ 在head.html中的<head>标签内添加
+  #+begin_example
+  {{ partial "mathjax.html" . }}
+  #+end_example
+  如果我们想要在某一篇文章中使用数学公式，先要在开头的Front Matter中添加 math=true ,之后我们就可以在文章中愉快地使用$或$$来添加自己的latex代码了。
+* Disqus配置
+静态博客的评论系统有一些都还不错，但是我不想借助github的issue功能，因此我不会考虑utterance这样的系统。再考虑到安全性，valine也不合适。Disqus正好可以满足我的需求，因此本站暂时使用Disqus（Disqus在国内会被墙这一点不太方便）。
+我使用的这个主题已经支持disqus，所以配置起来比较简单（对于其它主题，可以参考[[https://www.yuque.com/shenweiyan/cookbook/disqus-for-hugo][这里]]）。在disqus配置完之后把网站名填写到config.toml中：
+#+begin_src 
+ disqus = "kongmuqiuren"
+#+end_src
+之后在想要使用评论的文章里添加enableDisqus: true即可使用Disqus服务。
+* 远程部署
+由于我没有使用githube的管理方案，所以我自己写了远程文件同步的脚本，命令如下：
+#+begin_src sh
+rsync -avz  /path/blog/content ${USER}@${HOST}:~/${DIR} --include="*.org" --exclude="*"
+#+end_src
+这样就实现了主机和服务器的文件同步
+* 参考
++ [[https://github.com/gohugoio/hugo/issues/1528][baseUrl问题]]
++ [[https://gohugo.io/getting-started/quick-start/][hugo官网教程]]
++ [[https://gohugo.io/hosting-and-deployment/deployment-with-rsync/][远程部署方案]]
++ [[https://note.qidong.name/2018/03/hugo-mathjax/][MathJax解决方案--匿蟒]]

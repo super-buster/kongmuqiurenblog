@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Hugo 0.87.0" />
+  
+
+  <title> hugo博客搭建 |  Hugo</title>
+  <meta name="description" content="A simple and concise hugo theme.">
+  <link rel="stylesheet" href="http://108.160.143.157css/simpleness.css">
+  <link rel="canonical" href="http://108.160.143.157/posts/first-blog/">
+  <link rel="alternate" type="application/rss+xml" href="" title="Hugo">
+  
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+</head>
+
+
+<body>
+  <header class="menus">
+  
+
+  <nav >
+    
+    <a href="/"> Home</a>
+    
+    <a href="/about/"> About</a>
+    
+  </nav>
+
+  <nav class="fontawesome">
+    
+    <a href="https://github.com/RainerChiang" target="_blank">
+        <i title="GitHub" class="fab fa-github"></i>
+    </a>
+    
+    
+    <a href="http://108.160.143.157/index.xml" target="_blank">
+        <i title="RSS" class="fas fa-rss"></i>
+    </a>
+    
+  </nav>
+  
+  
+  <div class="hidden description">A simple and concise hugo theme.</div>
+  
+</header>
+
+<article class="article">
+  <header>
+    <h1 style="text-align: center;" >hugo博客搭建</h1>
+
+    <div class="post-meta">
+    
+      <time datetime="2021-04-12T10:14:38&#43;08:00">April 12, 2021</time> &nbsp; 
+    
+
+     &nbsp;
+
+    
+    
+    
+
+    
+      <i class="far fa-clock"></i>
+      
+      
+      
+
+      
+        5 min
+      
+      37 s
+      &nbsp;
+    
+
+    
+    </div>
+  </header>
+
+   
+
+  <div class="text">
+    
+<p>这是一篇用hugo搭建博客的教程，和网上大多数用github托管的方式不同，我们这里用自己的服务器来管理。你需要确认服务器上安装了hugo再进行下面的操作，关于安装的部分我不打算在这里讲解。所以直接进入正题吧。</p>
+<div id="outline-container-headline-1" class="outline-2">
+<h2 id="headline-1">
+远程服务器配置
+</h2>
+<div id="outline-text-headline-1" class="outline-text-2">
+<p>1.因为hugo默认使用1313端口监听，所以我们防火墙要开启1313端口的tcp服务，以我的centos系统为例，开启防火墙端口的命令为:</p>
+<div class="src src-sh">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">    firewall-cmd --zone<span style="color:#f92672">=</span>public --add-port<span style="color:#f92672">=</span>1313/tcp --permanent
+    firewall-cmd --reload <span style="color:#75715e">#更新防火墙配置</span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="outline-container-headline-2" class="outline-2">
+<h2 id="headline-2">
+hugo配置
+</h2>
+<div id="outline-text-headline-2" class="outline-text-2">
+<p>当我们安装好hugo以后,你如果安装网上的教程跑&#34;hugo server&#34;这个命令会发现 别人的电脑是无法访问你的博客的，解决方法如下：</p>
+<div class="src src-sh">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">  hugo server --bind<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;0.0.0.0&#34;</span> <span style="color:#75715e">#允许全网段访问</span></code></pre></div>
+</div>
+<p>这时用自己的电脑试试，发现可以访问啦！但还有一个小小的问题，在点击自己的博文发现解析出来的地址是localhost:posts/XXX,然后访问不了博文。这是因为对于服务器来说，它的root就是localhost，你在服务器上是可以打开自己的博文的，但别人要看就必须有明确的ip地址或者域名。按照官网的资料，我们需要在config.toml中把baseUrl改成:</p>
+<pre class="example">
+baseUrl=&#34;domain.com&#34; #这里domain换成自己购买的域名
+</pre>
+<p>我自己买了一个外国的服务器，暂时还没有域名，所以我改成了自己的ip地址。但奇怪的是那个地址的问题还是没有解决，我们需要在运行hugo的时候加上baseUrl参数(这好像是一个bug)，最后命令变成了这样：</p>
+<div class="src src-sh">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">hugo server --baseUrl<span style="color:#f92672">=</span>xxx.xxx.xx.xx --bind<span style="color:#f92672">=</span>0.0.0.0</code></pre></div>
+</div>
+</div>
+</div>
+<div id="outline-container-headline-3" class="outline-2">
+<h2 id="headline-3">
+MathJax配置
+</h2>
+<div id="outline-text-headline-3" class="outline-text-2">
+<p>写博客难免会涉及到一些数学公式，这里我打算用MathJax来提供数学公式的渲染。非常感谢<a href="http://weibo.com/u/2837672545">匿蟒</a>提供的方案，以下是具体解决步骤。</p>
+<ul>
+<li>
+<p>在你用的theme文件夹下找到layouts/partials，在下面建立一个mathjax.html</p>
+<pre class="example">
+{{ if .Params.math }}
+&lt;script&gt;
+MathJax = {
+  tex: {
+    inlineMath: [[&#34;$&#34;, &#34;$&#34;]],
+  },
+  displayMath: [
+    [&#34;$$&#34;, &#34;$$&#34;],
+    [&#34;\[\[&#34;, &#34;\]\]&#34;],
+  ],
+  svg: {
+    fontCache: &#34;global&#34;,
+  },
+};
+&lt;/script&gt;
+&lt;script src=&#34;https://polyfill.io/v3/polyfill.min.js?features=es6&#34;&gt;&lt;/script&gt;
+&lt;script
+id=&#34;MathJax-script&#34;
+async
+src=&#34;https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js&#34;
+&gt;&lt;/script&gt;
+{{ end }}
+</pre>
+</li>
+<li>
+<p>在head.html中的&lt;head&gt;标签内添加</p>
+<pre class="example">
+{{ partial &#34;mathjax.html&#34; . }}
+</pre>
+<p>如果我们想要在某一篇文章中使用数学公式，先要在开头的Front Matter中添加 math=true ,之后我们就可以在文章中愉快地使用$或$$来添加自己的latex代码了。</p>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-headline-4" class="outline-2">
+<h2 id="headline-4">
+Disqus配置
+</h2>
+<div id="outline-text-headline-4" class="outline-text-2">
+<p>静态博客的评论系统有一些都还不错，但是我不想借助github的issue功能，因此我不会考虑utterance这样的系统。再考虑到安全性，valine也不合适。Disqus正好可以满足我的需求，因此本站暂时使用Disqus（Disqus在国内会被墙这一点不太方便）。
+我使用的这个主题已经支持disqus，所以配置起来比较简单（对于其它主题，可以参考<a href="https://www.yuque.com/shenweiyan/cookbook/disqus-for-hugo">这里</a>）。在disqus配置完之后把网站名填写到config.toml中：</p>
+<div class="src src-text">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-text" data-lang="text"> disqus = &#34;kongmuqiuren&#34;</code></pre></div>
+</div>
+<p>之后在想要使用评论的文章里添加enableDisqus: true即可使用Disqus服务。</p>
+</div>
+</div>
+<div id="outline-container-headline-5" class="outline-2">
+<h2 id="headline-5">
+远程部署
+</h2>
+<div id="outline-text-headline-5" class="outline-text-2">
+<p>由于我没有使用githube的管理方案，所以我自己写了远程文件同步的脚本，命令如下：</p>
+<div class="src src-sh">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sh" data-lang="sh">rsync -avz  /path/blog/content <span style="color:#e6db74">${</span>USER<span style="color:#e6db74">}</span>@<span style="color:#e6db74">${</span>HOST<span style="color:#e6db74">}</span>:~/<span style="color:#e6db74">${</span>DIR<span style="color:#e6db74">}</span> --include<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;*.org&#34;</span> --exclude<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;*&#34;</span></code></pre></div>
+</div>
+<p>这样就实现了主机和服务器的文件同步</p>
+</div>
+</div>
+<div id="outline-container-headline-6" class="outline-2">
+<h2 id="headline-6">
+参考
+</h2>
+<div id="outline-text-headline-6" class="outline-text-2">
+<ul>
+<li>
+<p><a href="https://github.com/gohugoio/hugo/issues/1528">baseUrl问题</a></p>
+</li>
+<li>
+<p><a href="https://gohugo.io/getting-started/quick-start/">hugo官网教程</a></p>
+</li>
+<li>
+<p><a href="https://gohugo.io/hosting-and-deployment/deployment-with-rsync/">远程部署方案</a></p>
+</li>
+<li>
+<p><a href="https://note.qidong.name/2018/03/hugo-mathjax/">MathJax解决方案–匿蟒</a></p>
+</li>
+</ul>
+</div>
+</div>
+
+  </div>
+
+  <footer>
+    <hr class="end-line">
+
+    
+
+    
+
+    
+    
+  </footer>
+
+  <div class="comments">
+
+  <div class="comments-item">
+    <div id="disqus_thread"></div>
+    <script>
+      window.addEventListener("load", () => {
+        (function() {
+          
+          var d = document,
+            s = d.createElement("script");
+          s.src = "https://kongmuqiuren.disqus.com/embed.js";
+          s.setAttribute("data-timestamp", +new Date());
+          (d.head || d.body).appendChild(s);
+        })();
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the
+      <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript>
+  </div>
+
+
+
+</div>
+
+
+</article>
+
+
+</body>
+<div class="foot">
+  
+  
+    &copy; 2019 - 2021 &#183; 
+    <a href="/">Home</a> · Theme <a href="https://github.com/RainerChiang/simpleness">Simpleness</a> Powered by <a href="https://gohugo.io/">Hugo</a> &#183;
+    <a href="#"><i class="fas fa-chevron-up"></i></a>
+  
+
+  
+</div>
+
+<script src="/js/lazyload.min.js"></script>
+<script>
+  var lazyImage = new LazyLoad({
+    container: document.getElementById('article')
+  });
+</script>
+
+
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Hugo 0.87.0" />
+  
+
+  <title> Emacs配置 |  Hugo</title>
+  <meta name="description" content="A simple and concise hugo theme.">
+  <link rel="stylesheet" href="http://108.160.143.157css/simpleness.css">
+  <link rel="canonical" href="http://108.160.143.157/posts/emacs%E9%85%8D%E7%BD%AE/">
+  <link rel="alternate" type="application/rss+xml" href="" title="Hugo">
+  
+  
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
+</head>
+
+
+<body>
+  <header class="menus">
+  
+
+  <nav >
+    
+    <a href="/"> Home</a>
+    
+    <a href="/about/"> About</a>
+    
+  </nav>
+
+  <nav class="fontawesome">
+    
+    <a href="https://github.com/RainerChiang" target="_blank">
+        <i title="GitHub" class="fab fa-github"></i>
+    </a>
+    
+    
+    <a href="http://108.160.143.157/index.xml" target="_blank">
+        <i title="RSS" class="fas fa-rss"></i>
+    </a>
+    
+  </nav>
+  
+  
+  <div class="hidden description">A simple and concise hugo theme.</div>
+  
+</header>
+
+<article class="article">
+  <header>
+    <h1 style="text-align: center;" >Emacs配置</h1>
+
+    <div class="post-meta">
+    
+      <time datetime="2021-05-10T14:14:12&#43;08:00">May 10, 2021</time> &nbsp; 
+    
+
+     &nbsp;
+
+    
+    
+    
+
+    
+      <i class="far fa-clock"></i>
+      
+      
+      
+
+      
+        9 min
+      
+      23 s
+      &nbsp;
+    
+
+    
+    </div>
+  </header>
+
+   
+
+  <div class="text">
+    
+<div id="outline-container-headline-1" class="outline-2">
+<h2 id="headline-1">
+Introduction
+</h2>
+<div id="outline-text-headline-1" class="outline-text-2">
+<p>用emacs快两年了，经历有些曲折。怎么说呢，一开始瞎折腾勉强知道emacs怎么用，然后每次要用什么功能自己从网上找代码，没有的话就没办法了，我也不会lisp。这样其实效率很低，后来发现了子龙山人的视屏，看完之后总算对emacs有了一个大概的了解。之后我东拼西凑了一些配置，也玩的不已乐乎。大概是19,20年的时候发现了vs code这东西，vs code真香！此后用了很长一段vs code，emacs也就偶尔用来做做笔记了。为什么最后还是放弃了vscode呢？因为我现在用的manjaro给它分配的内存太小了，平时看/写的代码不是很大，一个编辑器倒是占了很大的空间。相比于vs code ，vim,emacs打开文件（尤其是大文件）的速度是最快的，因此我还是换回emacs了。我也没那么多时间折腾了，于是找了一个比较好的基础配置–centaur emacs。这个帖子用来记录一下在我平时用的centaur比较多的一些功能，还有就是自己的配置。</p>
+</div>
+</div>
+<div id="outline-container-headline-2" class="outline-2">
+<h2 id="headline-2">
+config
+</h2>
+<div id="outline-text-headline-2" class="outline-text-2">
+<div id="outline-container-headline-3" class="outline-3">
+<h3 id="headline-3">
+tramp
+</h3>
+<div id="outline-text-headline-3" class="outline-text-3">
+<p>通常来说，如果要在服务器上运行一些项目都是用git这样的托管平台的。但是有时不太方便用git，这个时候我们有两个解决方法（如果说不算直接到服务器上写代码这种方法的话–反正没有补全我是受不了），一是在本地写好代码然后手动用ssh或者rsync这样的工具传到服务器上，二是用一些更加强大的软件，让我们可以直接在本地编辑远程服务器上的文件。本人平时比较懒，我长期以来的做法是先把写好的项目传到服务器上，然后再到服务器上微调代码，这样也是尽量避免在服务器上改动代码。最近发现emacs其实是支持远程文件编辑的，emacs22.1以上包含了tramp（&#34;Transparent Remote (file) Access, Multiple Protocol&#34;），就是这个包让我们可以轻松做到远程文件编辑。所以我们只需要在服务器上安装最新的emacs就行了，如果是低版本的话可以参考<a href="https://lifegoo.pluskid.org/wiki/EmacsTRAMP.html">这里</a>来配置tramp。下面是使用emacs编辑我的vultr服务器上文件的例子：
+<img src="/tramp1.png" alt="/tramp1.png" title="/tramp1.png" />
+update on &lt;2021-07-02 五&gt; :
+在阿里服务器上用Tramp总是超时，远程主机为centos。解决方法：在远程主机的zshrc/其它终端补全配置文件上添加一行：</p>
+<pre class="example">
+[[ $TERM == &#34;dumb&#34; ]] &amp;&amp; unsetopt zle &amp;&amp; PS1=&#39;$ &#39; &amp;&amp; return
+</pre>
+<p>参考：<a href="https://www.bounga.org/tips/2017/11/30/fix-emacs-tramp-lag-and-timeout/">https://www.bounga.org/tips/2017/11/30/fix-emacs-tramp-lag-and-timeout/</a></p>
+</div>
+</div>
+<div id="outline-container-headline-4" class="outline-3">
+<h3 id="headline-4">
+ag
+</h3>
+<div id="outline-text-headline-4" class="outline-text-3">
+<p>ag是一个用来搜索工程下所有文件内容的方案。要在emacs中使用ag，需要确保电脑上已经装好了ag。centaur中已经安装好了ag包，只用M-x ag就能调用ag后端。下面是使用ag命令的结果：
+<img src="/ag.png" alt="/ag.png" title="/ag.png" />
+如果想要搜索工程下的文件名，那么可以使用find-grep-dired函数或者project-find-file。
+<img src="/find-grep-dired.png" alt="/find-grep-dired.png" title="/find-grep-dired.png" /></p>
+</div>
+</div>
+<div id="outline-container-headline-5" class="outline-3">
+<h3 id="headline-5">
+hydra
+</h3>
+<div id="outline-text-headline-5" class="outline-text-3">
+<p>emacs给人最明显的一个感受就是要记各种各样的快捷键！尤其是当我们有几百个包的时候，绝大多数快捷键是很少用到的，但是一旦要用的时候就会头疼了。尽管可以用describe keybinding/function这样的方式来查找所需要的功能，但是这样还是不太方便。hydra可以以一种很优雅的方式解决了这个问题，我只需要按下引导键，hydra会提供一个面板来使用各种快捷键，尤其是hydra不会马上退出,于是我可以在这个模式下连续地按下各种快捷键。来看看centaur中对hydra的使用，按下&lt;f6&gt;看到效果如下：
+<img src="/hydra.png" alt="/hydra.png" title="/hydra.png" />
+我感觉hydra很好用，于是自己写了一段配置来管理org编辑代码的快捷方式。按C-o可以看到效果。</p>
+<div class="src src-emacs-lisp">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-emacs-lisp" data-lang="emacs-lisp"><span style="color:#75715e">;;org hydra</span>
+<span style="color:#75715e">;; (defhydra hydra-awesome (awesome-map awesome-binding awesome-plist)</span>
+<span style="color:#75715e">;;   awesome-docstring</span>
+<span style="color:#75715e">;;   awesome-head-1</span>
+<span style="color:#75715e">;;   awesome-head-2</span>
+<span style="color:#75715e">;;   awesome-head-3</span>
+<span style="color:#75715e">;;   ...)</span>
+(global-set-key
+ (kbd <span style="color:#e6db74">&#34;C-o&#34;</span>)
+ (defhydra hydra-org-edit-menu (:color pink
+                                :hint <span style="color:#66d9ef">nil</span>)
+   <span style="color:#e6db74">&#34;
+</span><span style="color:#e6db74">  ^SRC^
+</span><span style="color:#e6db74">^^^^^---------
+</span><span style="color:#e6db74">_c_: code
+</span><span style="color:#e6db74">_s_: save
+</span><span style="color:#e6db74">_e_: exit
+</span><span style="color:#e6db74">_a_: abort
+</span><span style="color:#e6db74">&#34;</span>
+   (<span style="color:#e6db74">&#34;c&#34;</span> org-edit-src-code)
+   (<span style="color:#e6db74">&#34;s&#34;</span> org-edit-src-save)
+   (<span style="color:#e6db74">&#34;e&#34;</span> org-edit-src-exit)
+   (<span style="color:#e6db74">&#34;a&#34;</span> org-edit-src-abort)
+   (<span style="color:#e6db74">&#34;q&#34;</span> <span style="color:#66d9ef">nil</span> <span style="color:#e6db74">&#34;quit&#34;</span>)))</code></pre></div>
+</div>
+</div>
+</div>
+<div id="outline-container-headline-6" class="outline-3">
+<h3 id="headline-6">
+elpy
+</h3>
+<div id="outline-text-headline-6" class="outline-text-3">
+<p>elpy是emacs上独有的为python提供补全后端支持的包，它集成了非常多使用的功能，例如虚拟环境支持，snippet，语法检查。安装elpy后配置如下：</p>
+<div class="src src-emacs-lisp">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-emacs-lisp" data-lang="emacs-lisp">(use-package elpy
+  :ensure <span style="color:#66d9ef">t</span>
+  :defer <span style="color:#66d9ef">t</span>
+  :init
+  (advice-add <span style="color:#e6db74">&#39;python-mode</span> :before <span style="color:#e6db74">&#39;elpy-enable</span>)
+  (setq elpy-rpc-backend <span style="color:#e6db74">&#34;jedi&#34;</span>)
+  (setenv <span style="color:#e6db74">&#34;WORKON_HOME&#34;</span> <span style="color:#e6db74">&#34;~/miniconda3/envs&#34;</span>)
+  (add-hook <span style="color:#e6db74">&#39;elpy-mode-hook</span> (lambda () (highlight-indentation-mode <span style="color:#ae81ff">-1</span>))))</code></pre></div>
+</div>
+<p>想要有补全功能需要安装jedi或者rope中的一个，同样的语法检查也需要自己安装。安装完后用 elpy-config检查自己的配置是否正确。
+<img src="/elpy_config.png" alt="/elpy_config.png" title="/elpy_config.png" /></p>
+</div>
+</div>
+<div id="outline-container-headline-7" class="outline-3">
+<h3 id="headline-7">
+easy-hugo
+</h3>
+<div id="outline-text-headline-7" class="outline-text-3">
+<p>easy-hugo是一个帮助我们写hugo博客的工具，安装好easy-hugo之后添加以下配置:</p>
+<div class="src src-emacs-lisp">
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-emacs-lisp" data-lang="emacs-lisp"><span style="color:#75715e">;;easy-hugo</span>
+(use-package easy-hugo
+  :init
+  (setq easy-hugo-basedir <span style="color:#e6db74">&#34;~/yourblogroot&#34;</span>)
+  (setq easy-hugo-default-ext <span style="color:#e6db74">&#34;.org&#34;</span>)
+  (setq easy-hugo-previewtime <span style="color:#e6db74">&#34;300&#34;</span>)
+  (setq easy-hugo-postdir <span style="color:#e6db74">&#34;content/posts&#34;</span>)
+  )</code></pre></div>
+</div>
+<p>效果如下：
+<img src="/easyhugo.png" alt="/easyhugo.png" title="/easyhugo.png" /></p>
+</div>
+</div>
+<div id="outline-container-headline-8" class="outline-3">
+<h3 id="headline-8">
+vterm
+</h3>
+<div id="outline-text-headline-8" class="outline-text-3">
+<p>vterm是emacs里面的shell终端模拟器，之前一直用的是eshell命令来调出终端，vterm的终端功能更加强大，它可以很好配合之前安装的oh-my-zsh(不足的是不能在终端里进行复制)。在centaur中按&lt;f9&gt;可以调用vterm。</p>
+</div>
+</div>
+<div id="outline-container-headline-9" class="outline-3">
+<h3 id="headline-9">
+imenu
+</h3>
+<div id="outline-text-headline-9" class="outline-text-3">
+<p>imenu是对文档生成结构索引的菜单工具。它常用于在代码中检索某个函数/变量。下面是counsel-imenu的使用：
+<img src="/imenu.png" alt="/imenu.png" title="/imenu.png" /></p>
+</div>
+</div>
+<div id="outline-container-headline-10" class="outline-3">
+<h3 id="headline-10">
+counsel/ivy/swiper
+</h3>
+<div id="outline-text-headline-10" class="outline-text-3">
+<p>从<a href="https://github.com/abo-abo/swiper">这里</a>我们可以知道，Ivy是一个为emacs设计的通用的补全机制，这是补全的核心。Counsel是一个基于ivy的增强补全的实用工具，对emacs的一些命令提供补全。swiper是单独的一个isearch增强工具。开启ivy-mode之后使用M-x可以看到效果如下。<img src="/ivy-mode.png" alt="/ivy-mode.png" title="/ivy-mode.png" /></p>
+</div>
+</div>
+</div>
+</div>
+
+  </div>
+
+  <footer>
+    <hr class="end-line">
+
+    
+
+    
+
+    
+    
+  </footer>
+
+  <div class="comments">
+
+
+
+</div>
+
+
+</article>
+
+
+</body>
+<div class="foot">
+  
+  
+    &copy; 2019 - 2021 &#183; 
+    <a href="/">Home</a> · Theme <a href="https://github.com/RainerChiang/simpleness">Simpleness</a> Powered by <a href="https://gohugo.io/">Hugo</a> &#183;
+    <a href="#"><i class="fas fa-chevron-up"></i></a>
+  
+
+  
+</div>
+
+<script src="/js/lazyload.min.js"></script>
+<script>
+  var lazyImage = new LazyLoad({
+    container: document.getElementById('article')
+  });
+</script>
+
+
+</html>
