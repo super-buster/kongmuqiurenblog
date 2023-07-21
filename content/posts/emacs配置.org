@@ -1,90 +1,176 @@
----
-title: "Emacs配置"
-date: 2021-05-10T14:14:12+08:00
-draft: false
----
+#+TITLE: Emacs配置
+#+DATE: 2021-05-10T14:14:12+08:00
+#+author: Y Zhongxiang
+#+STARTUP: content
+#+OPTIONS: toc:nil
+
+* Table of Contents :TOC_2_ORG:
+- [[Introduction][Introduction]]
+- [[包管理][包管理]]
+  - [[Diminish][Diminish]]
+  - [[Auto Pakage Update][Auto Pakage Update]]
+  - [[Proxy][Proxy]]
+- [[界面][界面]]
+  - [[主题][主题]]
+  - [[UI设置][UI设置]]
+  - [[终端][终端]]
+  - [[Ace Window][Ace Window]]
+  - [[Dired][Dired]]
+  - [[Ibuffer][Ibuffer]]
+  - [[Treemacs][Treemacs]]
+  - [[Dashboard][Dashboard]]
+- [[搜索][搜索]]
+  - [[文件内容检索][文件内容检索]]
+  - [[工程检索][工程检索]]
+- [[补全][补全]]
+  - [[Yasnippet][Yasnippet]]
+  - [[Company][Company]]
+  - [[Corfu][Corfu]]
+  - [[LSP][LSP]]
+- [[编程][编程]]
+  - [[Parenthesis][Parenthesis]]
+- [[博客][博客]]
+- [[远程开发][远程开发]]
+  - [[tramp][tramp]]
 
 * Introduction
-用emacs快两年了，经历有些曲折。怎么说呢，一开始瞎折腾勉强知道emacs怎么用，然后每次要用什么功能自己从网上找代码，没有的话就没办法了，我也不会lisp。这样其实效率很低，后来发现了子龙山人的视屏，看完之后总算对emacs有了一个大概的了解。之后我东拼西凑了一些配置，也玩的不已乐乎。大概是19,20年的时候发现了vs code这东西，vs code真香！此后用了很长一段vs code，emacs也就偶尔用来做做笔记了。为什么最后还是放弃了vscode呢？因为我现在用的manjaro给它分配的内存太小了，平时看/写的代码不是很大，一个编辑器倒是占了很大的空间。相比于vs code ，vim,emacs打开文件（尤其是大文件）的速度是最快的，因此我还是换回emacs了。我也没那么多时间折腾了，于是找了一个比较好的基础配置--centaur emacs。这个帖子用来记录一下在我平时用的centaur比较多的一些功能，还有就是自己的配置。
+- 个人配置来源于[[https://github.com/MatthewZMD/.emacs.d][M-EMACS]]，去掉了一些平时不用的拓展包，并且添加了一些其它有用的功能。
+  M-EMACS的配置实际上是对seagle0128的配置进行了简化，包管理用的是use-package和git submodule，核心的配置在elisp和site-elisp文件夹下，每个功能按照模块的形式进行管理。
+- 创立本项目主要有两个目的：第一是对emacs的插件有基本的了解，方便自己修改配置。第二是记录自己攒配置的过程。
+- 本项目的TOC使用toc-org自动生成，使用标签为 =TOC_2_ORG= 生成二级的大纲。
+* 包管理
+M-EMACS使用的是melpa源安装第三方的包，需要有代理才能访问（或者使用镜像源），此配置在 =elisp/init-package.el= 文件夹下。
+很多时候由于作者懒得维护，他们开发的包不会放在melpa上，此时需要在github下载安装，可以用 =git submodule= 进行管理，之后会在 =.gitmodules= 生成相应配置。
+    #+BEGIN_SRC bash
+      cd site-elisp/
+      git submodule add https://github.com/foo/bar.git
+    #+END_SRC
+** Diminish
+对于那些永久启用的模式或者没有特殊交互的模式，使用者很少需要知道这些模式的存在。使用diminish可以有效减少模式信息的视觉污染，mode line中将隐去这些模式的信息，相应的键位绑定高亮也不再显示。
+** Auto Pakage Update
+M-EMACS使用了 =auto-package-update= 进行包自动更新管理，默认为7天自动更新。
+** Proxy
+emacs依赖的melpa包都需代理进行下载，参考seagle0128设置emacs代理，新建一个 =elisp/init-proxy= 对http和socks分别设置代理。
 
-* config
+* 界面
+** 主题
++ 关于主题的设置在 =elisp/init-theme.el= 中，默认使用的是 =doom-modeline= 主题，modeline改成了 =Doom Modeline= 。
++ =doom-modeline= 的源码以及包含了对图标 =nerd-icons= 的引用，因此无需再配置图标，直接用 =M-x nerd-icons-install-fonts= 安装。
++ 字体使用的是 =all-the-icons= ，定义在 =elisp/init-fonts.el= ，这些字体会自动下载到emacs配置的根目录下，需用执行 =M-x all-the-icons-install-fonts= 进行安装。
++ 表情使用第三方包emojify :smile:
+** UI设置
+=elisp/init-ui-config= 对emacs的一些默认显示做了配置，包括使用 =prettify-symbol= 增强一些特殊符号的可视性。
+以及这些设置：emacs应用的标题，开屏显示信息，行号显示，时间、电池显示。
+
+** 终端
+终端使用aweshell，更改快捷键绑定为 =<f9>= 。
+** Ace Window
+Ace Window用来管理窗口选择，M-EMACS默认使用的是 =C-x C-o= 来绑定ace-window，这里直接改成emacs默认的窗口切换快捷键 =C-o= ，按下快捷键之后用数字来选择对应窗口。
+  #+begin_src emacs-lisp
+   (use-package ace-window
+  :bind ("C-x o" . ace-window)
+  :custom-face
+  (aw-leading-char-face ((t (:inherit font-lock-keyword-face :foreground unspecified :bold t :height 3.0))))
+  (aw-minibuffer-leading-char-face ((t (:inherit font-lock-keyword-face :bold t :height 1.0))))
+  (aw-mode-line-face ((t (:inherit mode-line-emphasis :bold t)))))
+  #+end_src
+
+** Dired
+Dired用于管理文件和目录，它提供了一组命令，可以在emacs缓冲区中显示文件和目录，并进行文件和目录的操作。
+[[/images/dired.png]]
+
+** Ibuffer
+Ibuffer提供了和Dired类似的功能，用于管理buffer目录。
+[[/images/ibuffer.png]]
+
+** Treemacs
+Treemacs提供了一个类似于文件资源管理器的界面，可以让用户在emacs中方便地浏览和管理文件和目录，如图所示。
+#+attr_html: :width 50% :height 40%
+[[/images/treemacs.png]]
+
+由于 =lsp-mode= 包含了treemacs，M-EMCAS没有单独对treemacs设置，本项目参考seagle0128的treemacs配置文件并设置 =<f8>= 作为启动项。
+** Dashboard
+Dashboard提供了一个启动画面，用于快速访问最近打开的文件、项目、书签等。如图所示。
+#+attr_html: :width 60% :height 60%
+[[/images/dashboard.png]]
+
+* 搜索
+** 文件内容检索
+从[[https://github.com/abo-abo/swiper][这里]]我们可以知道，Ivy是一个为emacs设计的通用的补全机制，提供了一个交互式的命令行界面，它可以替代emacs自带的补全和搜索工具，提供更加快速和高效的补全和搜索体验。
+Counsel是一个基于ivy的增强补全的实用工具，对emacs的一些命令提供补全，它也有ag的功能可以对工程下的文件内容搜索。swiper同样是基于Ivy，用于文件内的字符串搜索，它的一个特色是提供增长性搜索，即可以动态的添加字符串进行搜索。
+
+[[/images/CounselandSwiper.png]]
+
+对于工程下的文件内容搜索可以使用更快的rg（ripgrep）或者ag（the silver teacher）。
+M-EMCAS中没有安装rg package，因此需要在 =elisp/init-search.el= 中修改配置如下。
+
+#+begin_src emacs-lisp
+(use-package color-rg
+  :init (use-package rg)
+  :load-path (lambda () (expand-file-name "site-elisp/color-rg" user-emacs-directory))
+  :if (executable-find "rg")
+  :bind ("C-M-s" . color-rg-search-input))
+#+end_src
+
+实际使用搜索功能的时候，可以使用 =counsel-rg= 在当前目录下探索性搜索，想要仔细搜索再用rg。
+配置中使用了[[https://github.com/manateelazycat][lazycat]] =color-rg= rg增强工具，使用rg后再按下m可以查看搜索帮助。
+
+[[/images/rg.png]]
+
+imenu是对文档生成结构索引的菜单工具。它常用于在代码中检索某个函数/变量。下面是counsel-imenu的使用。
+
+#+attr_html: :width 60% :height 60%
+[[/images/counsel-imenu.png]]
+** 工程检索
+projectile是一个专门的emacs项目级交互库，并且不会引入外部依赖。它会自动识别包含git，makfile等工程文件的目录作为工程根目录，也可以新建一个.projectile文件手动标记工程目录。
+M-EMACS在 =/elisp/init-projectile= 定义了相关配置，使用快捷键 =C-c p= 可以调出projectile manual。
+其它使用方式可以参考[[https://phenix3443.github.io/notebook/emacs/modes/projectile-mode.html][projectile操作手册]]。
+* 补全
+** Yasnippet
+YASnippet通过提供代码片段的模板和补全功能，帮助用户快速编写代码。例如定义一个hugo博客模板，输入h之后按 =Tab= 就能补全全部内容。
+#+BEGIN_example
+# -*- mode: snippet -*-
+# name: hugo
+# key: h
+# --
+#+HUGO_BASE_DIR: ../../
+#+TITLE: $1
+#+DATE: `(format-time-string "%Y-%m-%d")`
+#+author: Y Zhongxiang
+#+HUGO_AUTO_SET_LASTMOD: t
+#+HUGO_TAGS: $2
+#+HUGO_CATEGORIES: $3
+#+HUGO_DRAFT: false
+
+$0
+#+END_example
+** Company
+目前主流的补全机制依然是基于company mode。（似乎有些过时了？）
+** Corfu
+corfu是最新的轻量级文本补全方案，相比company更加高效和可拓展性更强，实际上corfu可以借助 =cape-company-to-capf= 实现任意的 =company= 后端。
+** LSP
+LSP mode补全所有语言，dap mode用于debug（需要建立一个launch.json文件）。
+M-EMACS使用lsp的基础上绑定了xref进行代码跳转，用 =Ctrl+mouse1= 可以跳转到定义处，之后用 =M-,=跳转回去。
+* 编程
+** Parenthesis
+使用[[https://github.com/Fuco1/smartparens][smartparens]]管理括号的补全，跳转等实用功能。
+* 博客
+使用 =ox-hugo= 可以将org文件转为markdown文件并且渲染，它的配置文件在 =elisp/init-hugo.el= 。
+可以在博客发布内容的同级目录下新建一个 =.dir-locals.el= 文件使得每次修改完文件后自动转换。
+
+#+begin_src emacs-lisp
+((org-mode . ((eval . (org-hugo-auto-export-mode)))))
+((nil . ((org-hugo-base-dir . "y:/kongmuqiurenblog"))))
+#+end_src emacs-lisp
+
+* 远程开发
 ** tramp
-通常来说，如果要在服务器上运行一些项目都是用git这样的托管平台的。但是有时不太方便用git，这个时候我们有两个解决方法（如果说不算直接到服务器上写代码这种方法的话--反正没有补全我是受不了），一是在本地写好代码然后手动用ssh或者rsync这样的工具传到服务器上，二是用一些更加强大的软件，让我们可以直接在本地编辑远程服务器上的文件。本人平时比较懒，我长期以来的做法是先把写好的项目传到服务器上，然后再到服务器上微调代码，这样也是尽量避免在服务器上改动代码。最近发现emacs其实是支持远程文件编辑的，emacs22.1以上包含了tramp（"Transparent Remote (file) Access, Multiple Protocol"），就是这个包让我们可以轻松做到远程文件编辑。所以我们只需要在服务器上安装最新的emacs就行了，如果是低版本的话可以参考[[https://lifegoo.pluskid.org/wiki/EmacsTRAMP.html][这里]]来配置tramp。下面是使用emacs编辑我的vultr服务器上文件的例子：
-[[/tramp1.png]]
+emacs22.1以上包含了tramp（"Transparent Remote (file) Access, Multiple Protocol"），就是这个包让我们可以轻松做到远程文件编辑。所以我们只需要在服务器上安装最新的emacs就行了，如果是低版本的话可以参考[[https://lifegoo.pluskid.org/wiki/EmacsTRAMP.html][这里]]来配置tramp。
+下面是使用emacs编辑我的vultr服务器上文件的例子：
+[[/images/tramp1.png]]
 update on <2021-07-02 五> :
 在阿里服务器上用Tramp总是超时，远程主机为centos。解决方法：在远程主机的zshrc/其它终端补全配置文件上添加一行：
 #+begin_example
-[[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
+[[ $TERM = "dumb" ]] && unsetopt zle && PS1='$ ' && return
 #+end_example
 参考：[[https://www.bounga.org/tips/2017/11/30/fix-emacs-tramp-lag-and-timeout/]]
-** ag
-ag是一个用来搜索工程下所有文件内容的方案。要在emacs中使用ag，需要确保电脑上已经装好了ag。centaur中已经安装好了ag包，只用M-x ag就能调用ag后端。下面是使用ag命令的结果：
-[[/ag.png]]
-如果想要搜索工程下的文件名，那么可以使用find-grep-dired函数或者project-find-file。
-[[/find-grep-dired.png]]
-** hydra
-emacs给人最明显的一个感受就是要记各种各样的快捷键！尤其是当我们有几百个包的时候，绝大多数快捷键是很少用到的，但是一旦要用的时候就会头疼了。尽管可以用describe keybinding/function这样的方式来查找所需要的功能，但是这样还是不太方便。hydra可以以一种很优雅的方式解决了这个问题，我只需要按下引导键，hydra会提供一个面板来使用各种快捷键，尤其是hydra不会马上退出,于是我可以在这个模式下连续地按下各种快捷键。来看看centaur中对hydra的使用，按下<f6>看到效果如下：
-[[/hydra.png]]
-我感觉hydra很好用，于是自己写了一段配置来管理org编辑代码的快捷方式。按C-o可以看到效果。
-#+begin_src emacs-lisp
-;;org hydra
-;; (defhydra hydra-awesome (awesome-map awesome-binding awesome-plist)
-;;   awesome-docstring
-;;   awesome-head-1
-;;   awesome-head-2
-;;   awesome-head-3
-;;   ...)
-(global-set-key
- (kbd "C-o")
- (defhydra hydra-org-edit-menu (:color pink
-                                :hint nil)
-   "
-  ^SRC^
-^^^^^---------
-_c_: code
-_s_: save
-_e_: exit
-_a_: abort
-"
-   ("c" org-edit-src-code)
-   ("s" org-edit-src-save)
-   ("e" org-edit-src-exit)
-   ("a" org-edit-src-abort)
-   ("q" nil "quit")))
-#+end_src
-** elpy
-elpy是emacs上独有的为python提供补全后端支持的包，它集成了非常多使用的功能，例如虚拟环境支持，snippet，语法检查。安装elpy后配置如下：
-#+begin_src emacs-lisp
-(use-package elpy
-  :ensure t
-  :defer t
-  :init
-  (advice-add 'python-mode :before 'elpy-enable)
-  (setq elpy-rpc-backend "jedi")
-  (setenv "WORKON_HOME" "~/miniconda3/envs")
-  (add-hook 'elpy-mode-hook (lambda () (highlight-indentation-mode -1))))
-#+end_src
-想要有补全功能需要安装jedi或者rope中的一个，同样的语法检查也需要自己安装。安装完后用 elpy-config检查自己的配置是否正确。
-[[/elpy_config.png]]
-** easy-hugo
-easy-hugo是一个帮助我们写hugo博客的工具，安装好easy-hugo之后添加以下配置:
-#+begin_src emacs-lisp
-;;easy-hugo
-(use-package easy-hugo
-  :init
-  (setq easy-hugo-basedir "~/yourblogroot")
-  (setq easy-hugo-default-ext ".org")
-  (setq easy-hugo-previewtime "300")
-  (setq easy-hugo-postdir "content/posts")
-  )
-#+end_src
-效果如下：
-[[/easyhugo.png]]
-
-** vterm
-vterm是emacs里面的shell终端模拟器，之前一直用的是eshell命令来调出终端，vterm的终端功能更加强大，它可以很好配合之前安装的oh-my-zsh(不足的是不能在终端里进行复制)。在centaur中按<f9>可以调用vterm。
-** imenu
-imenu是对文档生成结构索引的菜单工具。它常用于在代码中检索某个函数/变量。下面是counsel-imenu的使用：
-[[/imenu.png]]
-** counsel/ivy/swiper
-从[[https://github.com/abo-abo/swiper][这里]]我们可以知道，Ivy是一个为emacs设计的通用的补全机制，这是补全的核心。Counsel是一个基于ivy的增强补全的实用工具，对emacs的一些命令提供补全。swiper是单独的一个isearch增强工具。开启ivy-mode之后使用M-x可以看到效果如下。[[/ivy-mode.png]]

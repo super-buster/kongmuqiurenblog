@@ -1,0 +1,51 @@
+#+TITLE: linux服务器搭建梯子
+#+DATE: 2022-11-30T14:51:19+08:00
+#+PUBLISHDATE: 2022-11-30T14:51:19+08:00
+#+DRAFT: nil
+#+TAGS[]:
+#+DESCRIPTION: Short description
+
+* clash安装配置
+首先需要在linux服务器上下载安装配置clash。
+#+begin_example
+wget https://github.com/Dreamacro/clash/releases/download/v1.10.0/clash-linux-amd64-v1.10.0.gz
+gzip -d clash-linux-amd64-v1.10.0.gz
+mv clash-linux-amd64-v1.10.0 clashv10
+chmod u+x clashv10
+#+end_example
+
+之后把ikuuu的配置文件放在和clash运行文件相同的路径下并且把名字改成config.yaml，可以通过windows下的clash获取下载链接。
+[[/clash配置.png]]
+
+之后运行clash，并记录下端口号（用&改成后台运行）,第一次运行会自动下载cache.db和Country.mmdb两个文件。
+#+begin_example
+./clashv10 -d . &
+#+end_example
+
+[[/clash.png]]
+
+linux下没有图形界面选择节点，可以通过修改config.yaml来完成，如下图所示，只需要把想连的节点放在proxies列表第一个位置。
+[[/clash修改节点.png]]
+* proxychain安装配置
+配置完clash之后需要配置linux的系统代理，用proxychain会非常方便。
+#+begin_example
+git clone https://github.com/rofl0r/proxychains-ng.git
+cd proxychains-ng
+# 无root权限安装，把prefix改成自己有权限写的路径
+./configure --prefix=xxx
+make && make install
+# 安装完之后生成bin目录，之后把配置文件复制到bin文件夹下
+cp ./src/proxychains.conf ../bin/
+#+end_example
+之后修改proxychains.conf，修改下图所示位置，注意proxychains无法设置https代理。
+[[/proxychain.png]]
+最后把proxychain的bin目录添加到环境变量，以及配置PROXYCHAINS_CONF_FILE变量为proxychain.conf所在的位置。
+#+begin_example
+export PATH=xxx/proxychains/bin:$PATH
+export PROXYCHAINS_CONF_FILE=xxx/proxychains.conf
+#+end_example
+
+proxychains使用方式就是在需要用到代理的命令前加上proxychains4，可以测试下载google主页。（ping命令基于ICMP，无法代理）
+#+begin_example
+proxychains4 wget google.com
+#+end_example

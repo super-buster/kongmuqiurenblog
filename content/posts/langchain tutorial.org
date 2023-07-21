@@ -1,0 +1,349 @@
+#+HUGO_BASE_DIR: ../../
+#+TITLE: langchain 教程
+#+DATE: 2023-07-19
+#+author: Y Zhongxiang
+#+HUGO_AUTO_SET_LASTMOD: t
+#+HUGO_TAGS:
+#+HUGO_CATEGORIES:
+#+HUGO_DRAFT: false
+
+* Table of Contents :TOC_3_ORG:
+- [[组件][组件]]
+  - [[Models][Models]]
+    - [[LLM（大型语言模型）][LLM（大型语言模型）]]
+    - [[Chat Model（聊天模型）][Chat Model（聊天模型）]]
+    - [[Text Embedding Model（嵌入模型）][Text Embedding Model（嵌入模型）]]
+  - [[Prompts][Prompts]]
+    - [[prompt template（提示模板）][prompt template（提示模板）]]
+    - [[chat prompt template（对话提示模板）][chat prompt template（对话提示模板）]]
+  - [[Chain][Chain]]
+  - [[Agent][Agent]]
+    - [[Action agents（行动代理）][Action agents（行动代理）]]
+    - [[Plan-and-execute agents（计划执行代理）][Plan-and-execute agents（计划执行代理）]]
+  - [[Memory][Memory]]
+- [[API][API]]
+  - [[cache][cache]]
+- [[babyagi lanchain][babyagi lanchain]]
+
+* 组件
+** Models
+*** LLM（大型语言模型）
+这些模型将文本字符串作为输入并返回文本字符串作为输出。
+*** Chat Model（聊天模型）
+聊天模型基于大型语言模型，不同的是它接收聊天消息作为输入，返回的也是聊天消息。LangChain中支持四种消息AIMessage, HumanMessage, SystemMessage ,
+ ChatMessage(ChatMessage 接受一个任意的角色参数)。
+  #+begin_src python
+    from langchain.llms import OpenAI
+        # 加载 OpenAI 模型（LLM），默认使用最贵的text-davinci-003
+        # 参考 https://github.com/hwchase17/langchain/blob/master/langchain/llms/openai.py#L119
+        llm = OpenAI(model_name="text-davinci-003")
+
+        from langchain.chat_models import ChatOpenAI
+        # 加载ChatOpenai 模型（聊天模型）
+        chat = ChatOpenAI(openai_api_key="...")
+        from langchain.schema import (
+        AIMessage,
+        HumanMessage,
+        SystemMessage
+    )
+       messages = [
+            SystemMessage(content="You are a helpful assistant that translates English to Chinese."),
+            HumanMessage(content="Translate this sentence from English to French. I love programming.")
+       ]
+       chat(messages)
+       # -> AIMessage(content="J'aime programmer.", additional_kwargs={})
+  #+end_src
+*** Text Embedding Model（嵌入模型）
+文本嵌入模型接收文本作为输入，返回的是文本嵌入列表。得到嵌入之后通常结合向量数据库进行存储和索引，langchain给出了三种向量数据库的使用，
+  chroma，faiss，lance。这里用faiss配合openai的embedding模型，为了能使用openai的接口需要进行一个简单的封装。
+  #+begin_src python
+    class A8ProxyEmbedding(BaseModel, Embeddings):
+    embedding_url = 'http://avatar.aicubes.cn/vtuber/ai_access/chatgpt/v1/embeddings'
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @retry(wait=wait_random_exponential(min=1, max=15), stop=stop_after_attempt(3))
+    def _embeeding_inter(self, cnt: str):
+        response = None
+        tlk = tokener.usertoken()
+        if len(tlk) == 0 :
+            return None
+        _headers = {
+                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                "userId": tlk[0],
+                "token": tlk[1],
+        }
+        pld = {'input': str(cnt).replace("\n", " ")}
+        try:
+            with requests.session() as sess:
+                response = sess.post(self.embedding_url, data=pld, headers=_headers)
+                if not response.content:
+                    return None
+                dic = json.loads(response.content)
+                emb = dic["data"]["data"][0]
+        except Exception as e:
+            print("query embedding error", e, "response=", response)
+            raise
+        return emb
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        data = []
+        for txt in texts:
+            try:
+                arr = self._embeeding_inter(txt)
+                if arr:
+                    data.append(arr)
+            except Exception as e:
+                print("embedding error", e)
+
+        return list(map(lambda ic: ic["embedding"], data))
+
+    def embed_query(self, text: str) -> List[float]:
+        emb = self._embeeding_inter(text)
+        return emb["embedding"]
+  #+end_src
+** Prompts
+通常作为输入传递给模型的信息被称为prompt（提示），LangChain目前只支持字符形式的提示。为了方便用户创建自定义形式的提示，langchain提供了两种提示模板，分别用于LLM和Chat Model。
+*** prompt template（提示模板）
+提示模板可以采用任意数量的输入变量，并且可以格式化以生成提示。
+  #+begin_src  python
+    from langchain import PromptTemplate
+    multiple_input_prompt = PromptTemplate(
+        input_variables=["adjective", "content"],
+        template="Tell me a {adjective} joke about {content}."
+        )
+    multiple_input_prompt.format(adjective="funny", content="chickens")
+    # -> "Tell me a funny joke about chickens."
+  #+end_src
+*** chat prompt template（对话提示模板）
+聊天模型将聊天消息列表作为输入（该列表通常称为提示）。 这些聊天消息与原始字符串不同之处在于，每条消息都与一个角色关联对话提示模板其实也是prompt template，但是不同之处在于消息
+  有一个角色与之关联。例如，在 OpenAI的completion API 中，每条消息都需要选定从user，assitant，system，function中选定一个角色（参考[[https://platform.openai.com/docs/api-reference/chat/create][openai文档]]）
+  #+begin_src  python
+    from langchain.prompts import (
+            ChatPromptTemplate,
+            PromptTemplate,
+            SystemMessagePromptTemplate,
+            AIMessagePromptTemplate,
+            HumanMessagePromptTemplate,
+        )
+            template="You are a helpful assistant that translates {input_language} to {output_language}."
+            system_message_prompt = SystemMessagePromptTemplate.from_template(template)
+            human_template="{text}"
+            human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
+    chat_prompt = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+
+    # get a chat completion from the formatted messages
+    chat_prompt.format_prompt(input_language="English", output_language="French", text="I love programming.").to_messages()
+     # [SystemMessage(content='You are a helpful assistant that translates English to French.', additional_kwargs={}),
+     # HumanMessage(content='I love programming.', additional_kwargs={})]
+  #+end_src
+** Chain
+Chain（链）允许我们将多个组件组合在一起以创建一个单一的、连贯的应用程序。例如，我们可以创建一个链，它接受用户输入，使用PromptTemplate对其进行格式化，然后将格式化的响应传递给LLM。
+我们可以通过将多个链组合在一起，或者将链与其他组件组合来构建更复杂的链。
++ LLMChain（大模型链）：大模型链用的最多，它核心的部分由PromptTemplate和语言模型（大模型或聊天模型）组成。
+  #+begin_src python
+    from langchain import PromptTemplate, OpenAI, LLMChain
+
+    prompt_template = "What is a good name for a company that makes {product}?"
+
+    llm = OpenAI(temperature=0)
+    llm_chain = LLMChain(
+        llm=llm,
+        prompt=PromptTemplate.from_template(prompt_template)
+    )
+    llm_chain("colorful socks")
+  #+end_src
++ MathChain（数学链）：数学链用LLM和PythonREPL来解决复杂的文字数学问题。
+  #+begin_src python
+    from langchain import OpenAI, LLMMathChain
+
+    llm = OpenAI(temperature=0)
+    llm_math = LLMMathChain.from_llm(llm, verbose=True)
+
+    llm_math.run("What is 13 raised to the .3432 power?")
+
+    #########################################
+    # > Entering new LLMMathChain chain...  #
+    # What is 13 raised to the .3432 power? #
+    # ```text                               #
+    # 13 ** .3432                           #
+    # ```                                   #
+    # ...numexpr.evaluate("13 ** .3432")... #
+    #                                       #
+    # Answer: 2.4116004626599237            #
+    # > Finished chain.                     #
+    # 'Answer: 2.4116004626599237'          #
+    #########################################
+  #+end_src
++ SequentialChain（顺序链）： 顺序链允许您连接多个链并将它们组成执行某些特定场景的管道。
+  #+begin_src python
+    from langchain.chains import SimpleSequentialChain
+    overall_chain = SimpleSequentialChain(chains=[chain_one, chain_two], verbose=True)
+  #+end_src
+** Agent
+有些应用并不是一开始就确定调用哪些模型，而是依赖于用户输入，Agent（代理）提供了一套工具，根据用户的输入来决定调用这些工具种的哪一个。
+*** Action agents（行动代理）
+在每个时间步，使用所有先前操作的输出来决定下一步的行动。
++ Zero-shot ReAct: 使用的比较多的为Zero-shot ReAct agent，它采用[[https://arxiv.org/pdf/2210.03629.pdf][ReAct框架]]（reasoning+action）来决定使用哪种工具。
+  #+begin_src python
+  from langchain.agents import load_tools
+  from langchain.agents import initialize_agent
+  from langchain.agents import AgentType
+  from langchain.llms import OpenAI
+  llm = OpenAI(temperature=0)
+  tools = load_tools(["serpapi", "llm-math"], llm=llm)
+  agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
+  agent.run("Who is Leo DiCaprio's girlfriend? What is her current age raised to the 0.43 power?")
+
+    #  > Entering new AgentExecutor chain...
+    #  I need to find out who Leo DiCaprio's girlfriend is and then calculate her age raised to the 0.43 power.
+    # Action: Search
+    # Action Input: "Leo DiCaprio girlfriend"
+    # Observation: Camila Morrone
+    # Thought: I need to find out Camila Morrone's age
+    # Action: Search
+    # Action Input: "Camila Morrone age"
+    # Observation: 25 years
+    # Thought: I need to calculate 25 raised to the 0.43 power
+    # Action: Calculator
+    # Action Input: 25^0.43
+    # Observation: Answer: 3.991298452658078
+
+    # Thought: I now know the final answer
+    # Final Answer: Camila Morrone is Leo DiCaprio's girlfriend and her current age raised to the 0.43 power is 3.991298452658078.
+
+    # > Finished chain.
+    # "Camila Morrone is Leo DiCaprio's girlfriend and her current age raised to the 0.43 power is 3.991298452658078."
+#+end_src
++ Conversational React: 对话代理与内存组件一起使用，实现对话功能。
+*** Plan-and-execute agents（计划执行代理）
+预先决定好完整的行动顺序，然后执行所有行动且不会更新计划。这个想法很大程度上受到[[https://yoheinakajima.com/task-driven-autonomous-agent-utilizing-gpt-4-pinecone-and-langchain-for-diverse-applications/][BabyAGI]]和随后的[[https://arxiv.org/pdf/2305.04091.pdf][“Plan-and-Solve”论文]]的启发，
+计划制定一般是用LLM来完成，执行一般采用独立的外部工具。
+#+begin_src python
+  from langchain.chat_models import ChatOpenAI
+  from langchain.experimental.plan_and_execute import PlanAndExecute, load_agent_executor, load_chat_planner
+  from langchain.llms import OpenAI
+  from langchain import SerpAPIWrapper
+  from langchain.agents.tools import Tool
+  from langchain import LLMMathChain
+
+  search = SerpAPIWrapper()
+  llm = OpenAI(temperature=0)
+  llm_math_chain = LLMMathChain.from_llm(llm=llm, verbose=True)
+  tools = [
+      Tool(
+          name = "Search",
+          func=search.run,
+          description="useful for when you need to answer questions about current events"
+      ),
+      Tool(
+          name="Calculator",
+          func=llm_math_chain.run,
+          description="useful for when you need to answer questions about math"
+      ),
+  ]
+
+  model = ChatOpenAI(temperature=0)
+  planner = load_chat_planner(model)
+  executor = load_agent_executor(model, tools, verbose=True)
+  agent = PlanAndExecute(planner=planner, executor=executor, verbose=True)
+  agent.run("Who is Leo DiCaprio's girlfriend? What is her current age raised to the 0.43 power?")
+#+end_src
+** Memory
+模型是无状态的，不保存上一次交互时的数据，例如OpenAI的API接口是没有上下文概念的，而chatGPT是额外实现了上下文功能，因此具有了优秀的对话能力。
+为了提供上下文的功能，LangChain提供了记忆组件，用来在对话过程中存储数据。
++ Memory to LLMChain
+  实现记忆最重要的步骤是正确设置提示。在下面的提示中，我们有两个输入：一个用于实际输入，另一个用于Memory类的输入。
+  #+begin_src  python
+    from langchain.memory import ConversationBufferMemory
+    from langchain import OpenAI, LLMChain, PromptTemplate
+    template = """You are a chatbot having a conversation with a human.
+
+    {chat_history}
+    Human: {human_input}
+    Chatbot:"""
+
+    prompt = PromptTemplate(
+        input_variables=["chat_history", "human_input"], template=template
+    )
+    memory = ConversationBufferMemory(memory_key="chat_history")
+    llm_chain = LLMChain(
+    llm=OpenAI(),
+    prompt=prompt,
+    verbose=True,
+    memory=memory,
+    )
+    llm_chain.predict(human_input="Hi there my friend")
+  #+end_src
+  如果要制作一个chatbot，可以直接使用带有记忆功能的ConversationChain，下面提供了一个例子实现长期的历史对话信息保存。
+  #+begin_src  python
+    from langchain.memory import ChatMessageHistory
+    from langchain.schema import messages_from_dict, messages_to_dict
+
+    history = ChatMessageHistory()
+    history.add_user_message("hi!")
+    history.add_ai_message("whats up?")
+
+    dicts = messages_to_dict(history.messages)
+
+    print(dicts)
+    # [{'type': 'human', 'data': {'content': 'hi!', 'additional_kwargs': {}}},
+    # {'type': 'ai', 'data': {'content': 'whats up?', 'additional_kwargs': {}}}]
+    # 读取历史消息
+    new_messages = messages_from_dict(dicts)
+
+    print(new_messages)
+    #[HumanMessage(content='hi!', additional_kwargs={}),
+    # AIMessage(content='whats up?', additional_kwargs={})]
+#+end_src
+  这种方式很直观，但是容易被逐渐增加的token数量限制，为了解决长对话存储和追踪问题，langchain提供了ConversationSummaryBufferMemory。
+  它的作用有两个：第一是对历史会话的总结，总结后的对话信息可以更加紧凑和易于理解，避免了存储过多的信息。第二是在内存中保存最近交互的缓冲区。
++ Memory to Agent
+  实现一个带有历史信息的agent分两步：第一，实现一个有记忆能力的LLMChain。第二，用这个Chain构造实现agent。
+  #+begin_src python
+        from langchain.agents import ZeroShotAgent, Tool, AgentExecutor
+        from langchain.memory import ConversationBufferMemory
+        from langchain import OpenAI, LLMChain
+        from langchain.utilities import GoogleSearchAPIWrapper
+        search = GoogleSearchAPIWrapper()
+        tools = [
+            Tool(
+                name="Search",
+                func=search.run,
+                description="useful for when you need to answer questions about current events",
+            )
+        ]
+        # promt 需要有历史信息的占位符
+        prefix = """Have a conversation with a human, answering the following questions as best you can. You have access to the following tools:"""
+        suffix = """Begin!"
+
+        {chat_history}
+        Question: {input}
+        {agent_scratchpad}"""
+
+        prompt = ZeroShotAgent.create_prompt(
+            tools,
+            prefix=prefix,
+            suffix=suffix,
+            input_variables=["input", "chat_history", "agent_scratchpad"],
+        )
+        memory = ConversationBufferMemory(memory_key="chat_history")
+        llm_chain = LLMChain(llm=OpenAI(temperature=0), prompt=prompt)
+        agent = ZeroShotAgent(llm_chain=llm_chain, tools=tools, verbose=True)
+        # 带有记忆能力的agent
+        agent_chain = AgentExecutor.from_agent_and_tools(
+        agent=agent, tools=tools, verbose=True, memory=memory
+    )
+        agent_chain.run(input="How many people live in canada?")
+  #+end_src
+
+* API
+** cache
+因为某些LLM请求需要花费大量时间进行处理，对于大量的重复需求，可以通过缓存来提高效率。缓存可以使用内存缓存、SQLite缓存、Redis缓存和自定义的SQLAlchemy缓存。
+* babyagi lanchain
+
+
